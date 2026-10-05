@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title><!--PACKAGE_NAME--> — INGEST.md package</title>
+<meta property="og:title" content="<!--PACKAGE_NAME-->">
+<meta property="og:description" content="<!--BLUF_FIRST_SENTENCE-->">
+<meta property="og:type" content="website">
+<meta property="og:url" content="<!--PACKAGE_URL-->">
+<meta property="og:image" content="<!--CARD_IMAGE_URL-->">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Share card: package name, one-paragraph summary, and sha256 fingerprint on a dark background.">
+<meta property="og:site_name" content="INGEST.md — the shareable-artifact manifest convention">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  body { margin:0; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:#0d1117; color:#e6edf3; }
+  .card { max-width:640px; margin:8vh auto; padding:0 24px 48px; }
+  h1 { font-size:34px; margin:0 0 8px; }
+  .sub { color:#8b949e; font-size:15px; margin-bottom:28px; }
+  .bluf { font-size:17px; line-height:1.6; color:#c9d1d9; margin-bottom:28px; }
+  .fp { font-family:ui-monospace,Menlo,Consolas,monospace; color:#58a6ff; font-size:14px; }
+  .fphint { color:#8b949e; font-size:12px; font-style:italic; margin:4px 0 32px; }
+  .oneliner { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:14px 16px;
+              font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; color:#e6edf3; }
+  .oneliner b { color:#58a6ff; }
+  a { color:#58a6ff; text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1><!--PACKAGE_NAME--></h1>
+  <div class="sub">A shareable-artifact package · INGEST.md convention</div>
+  <div class="bluf"><!--BLUF_FULL--></div>
+  <div class="fp">sha256 fingerprint: <!--FINGERPRINT--></div>
+  <div class="fphint">verify after transfer — if it differs, the tree changed</div>
+  <div class="oneliner">For your agent: <b>Read INGEST.md at the artifact root and execute its load order; it routes everything else.</b></div>
+  <p><a href="./INGEST.md">INGEST.md manifest →</a></p>
+</div>
+</body>
+</html>
