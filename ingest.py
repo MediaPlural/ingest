@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""ingest — the INGEST.md reference CLI (convention tool, stdlib-only).
+
+The file is the SDK: this tool does the work an adopter would otherwise rebuild.
+Zero dependencies, no account, no service. Spec: MediaPlural/ingest SPEC.md
+(INGEST.md canonical + AGENT-INGEST.md alias, one schema, discovery order).
+
+Commands:
+  ingest init <dir>     scan artifact dir -> emit INGEST.md (BLUF, load order,
+                        file map, sha256 fingerprint)
+  ingest verify <dir>   recompute the fingerprint; compare against the manifest
+  ingest card <dir>     emit the share card (human surface) + the one-liner
+                        (machine surface) from the manifest
+
+The manifest carries a `canonical_name` + `alias` note per the two-name spec.
+"""
+import argparse
+import hashlib
+import json
+import pathlib
+import sys
+
+CANONICAL = "INGEST.md"
+ALIAS = "AGENT-INGEST.md"
+
+
+def find_manifest(root: pathlib.Path):
+    """Discovery order per spec: INGEST.md first, AGENT-INGEST.md second."""
+    for name in (CANONICAL, ALIAS):
+        p = root / name
+        if p.exists():
+            return p
+    return None
+
+
+def fingerprint_files(root: pathlib.Path):
+    """sha256 over the artifact set (manifest excluded, both names)."""
+    h = hashlib.sha256()
+    for f in sorted(p for p in root.rglob("*")
+                    if p.is_file() and p.name not in (CANONICAL, ALIAS)):
+        h.update(f.read_bytes())
+    return h.hexdigest()[:16]
+
+
+def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_line=""):
+    fm = "\n".join(f"- `{f.relative_to(root).as_posix()}` — {f.stat().st_size:,} bytes" for f in files)
+    return f"""# INGEST.md — machine manifest for `{root.name}`
+
+> Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
+> **Package fingerprint (sha256):** `{fp}` — verify after transfer; if it differs, the tree changed.
+{grant_line}
+## Load order (the one required section)
+
+1. BLUF (below) — the one-paragraph bottom line.
+2. The files in the file map, in listed order.
+{f"3. The video: `{video}` — the human-facing walkthrough." if video else ""}
+
+## BLUF
+
+{bluf}
+
+## File map
+
+{fm}
+
+## The one-liner
+
+**Prompt form:** Read `{CANONICAL}` at the artifact root and execute its load order; it routes everything else.
+**CLI form:** `ingest <dir>` — this reference tool reads the manifest.
+"""
+
+
+def cmd_init(args):
+    root = pathlib.Path(args.dir)
+    if not root.is_dir():
+        print(f"ERROR: {args.dir} is not a directory"); return 1
+    if args.visibility not in ("public", "unlisted", "private"):
+        print("ERROR: --visibility must be public|unlisted|private"); return 1
+    files = sorted(p for p in root.rglob("*") if p.is_file() and p.name not in (CANONICAL, ALIAS))
+    if not files:
+        print(f"ERROR: {root} is empty — nothing to ingest"); return 1
+    bluf = pathlib.Path(args.bluf).read_text(encoding="utf-8").strip() if args.bluf else "(BLUF not yet written — write it before sharing.)"
+    fp = fingerprint_files(root)
+    import hashlib as _h
+    grant_line = ""
+    if args.visibility == "private":
+        grant_hash = _h.sha256(args.grant.encode()).hexdigest()[:16] if args.grant else _h.sha256(fp.encode()).hexdigest()[:16]
+        grant_line = f"\n**Visibility:** private — ingestion requires an access grant (sha256 grant hash: `{grant_hash}`).\n"
+        if not args.grant:
+            grant_line += "> No --grant given: the grant defaults to the fingerprint — ISSUE a real grant before sharing privately.\n"
+    else:
+        grant_line = f"\n**Visibility:** {args.visibility} — ingestion is {'open to anyone with the reference' if args.visibility == 'public' else 'open to anyone holding the reference (not listed/indexed)'}.\n"
+    (root / CANONICAL).write_text(manifest_text(root, bluf, files, fp, args.video, args.visibility, grant_line), encoding="utf-8")
+    print(f"OK init: {root / CANONICAL}")
+    print(f"   {len(files)} files | fingerprint {fp} | visibility {args.visibility}"
+          + (f" | grant issued (hash {grant_hash})" if args.visibility == "private" else ""))
+    return 0
+
+
+def cmd_verify(args):
+    root = pathlib.Path(args.dir)
+    m = find_manifest(root)
+    if m is None:
+        print(f"ERROR: no {CANONICAL} or {ALIAS} in {root}"); return 1
+    text = m.read_text(encoding="utf-8")
+    import re
+    got = re.search(r"fingerprint \(sha256\)\:\*?\*? `([0-9a-f]{16})`", text)
+    if not got:
+        print("ERROR: manifest carries no fingerprint"); return 1
+    fp = fingerprint_files(root)
+    ok = fp == got.group(1)
+    print(f"{'OK' if ok else 'MISMATCH'}: manifest {got.group(1)} vs recomputed {fp}")
+    print(f"   manifest file: {m.name} ({'canonical' if m.name == CANONICAL else 'alias'})")
+    return 0 if ok else 2
+
+
+def cmd_card(args):
+    root = pathlib.Path(args.dir)
+    m = find_manifest(root)
+    if m is None:
+        print(f"ERROR: no manifest in {root} — run `ingest init` first"); return 1
+    text = m.read_text(encoding="utf-8")
+    import re
+    title = root.name
+    bluf_m = re.search(r"## BLUF\n\n(.*?)\n\n", text, re.S)
+    bluf = (bluf_m.group(1)[:280] + "…") if bluf_m and len(bluf_m.group(1)) > 280 else (bluf_m.group(1) if bluf_m else "(no BLUF)")
+    print("┌" + "─" * 62 + "┐")
+    print(f"│ {title[:60]:<60} │")
+    print("├" + "─" * 62 + "┤")
+    for line in bluf.split("\n")[:5]:
+        print(f"│ {line[:60]:<60} │")
+    print("└" + "─" * 62 + "┘")
+    print()
+    print("THE ONE-LINER:")
+    print(f"  Read {CANONICAL} at the artifact root and execute its load order; it routes everything else.")
+    return 0
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="ingest", description="The INGEST.md reference CLI — the file is the SDK")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p_init = sub.add_parser("init", help="scan artifact dir -> emit INGEST.md")
+    p_init.add_argument("dir"); p_init.add_argument("--bluf", default=""); p_init.add_argument("--video", default="")
+    p_init.add_argument("--visibility", default="unlisted", help="public|unlisted|private"); p_init.add_argument("--grant", default="", help="access grant token for private ingestion")
+    p_init.set_defaults(fn=cmd_init)
+    p_verify = sub.add_parser("verify", help="recompute + compare the fingerprint")
+    p_verify.add_argument("dir"); p_verify.set_defaults(fn=cmd_verify)
+    p_card = sub.add_parser("card", help="emit the share card + one-liner")
+    p_card.add_argument("dir"); p_card.set_defaults(fn=cmd_card)
+    args = ap.parse_args()
+    return args.fn(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/MediaPlural/ingest/schema/ingest-manifest.schema.json",
+  "title": "INGEST.md manifest",
+  "description": "The shareable-artifact manifest: BLUF, load order, file map, sha256 package fingerprint. One schema for both INGEST.md (canonical) and AGENT-INGEST.md (alias).",
+  "type": "object",
+  "required": ["package_name", "fingerprint", "load_order", "file_map"],
+  "properties": {
+    "package_name": {
+      "type": "string",
+      "description": "The artifact set's name (usually the directory name)."
+    },
+    "canonical_name": {
+      "type": "string",
+      "enum": ["INGEST.md"],
+      "description": "The canonical manifest filename (per the two-name rule)."
+    },
+    "alias": {
+      "type": "string",
+      "enum": ["AGENT-INGEST.md"],
+      "description": "The registered alias filename, same schema."
+    },
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "sha256 over the artifact set (manifest files excluded), hex-truncated to 16 chars. Recompute after transfer; mismatch = the tree changed."
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["unlisted", "public", "private"],
+      "default": "unlisted",
+      "description": "The package's share posture. OPTIONAL — degrades gracefully."
+    },
+    "bluf": {
+      "type": "string",
+      "description": "Bottom Line Up Front: the one-paragraph summary. OPTIONAL."
+    },
+    "load_order": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"},
+      "description": "REQUIRED. The single entry-point contract: the ordered steps/files a consuming agent follows. A reader must be able to consume the package by parsing this alone."
+    },
+    "file_map": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "bytes"],
+        "properties": {
+          "path": {"type": "string", "description": "POSIX-relative path within the artifact set."},
+          "bytes": {"type": "integer", "minimum": 0}
+        }
+      },
+      "description": "REQUIRED. Every file in the set with its size."
+    },
+    "video": {
+      "type": "string",
+      "description": "OPTIONAL. Path to the human-facing walkthrough video, if any."
+    },
+    "provenance": {
+      "type": "object",
+      "description": "OPTIONAL. Authorship/custody notes; degrades gracefully when absent."
+    },
+    "grants": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "OPTIONAL. Access-grant lines for private visibility packages."
+    }
+  }
+}
