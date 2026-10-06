@@ -1,4 +1,4 @@
-# INGEST.md — machine manifest for `consumer-share-pkg`
+# INGEST.md — machine manifest for `consumer`
 
 > Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
 > **Package fingerprint (sha256):** `b2dfb027d070de69` — verify after transfer; if it differs, the tree changed.
