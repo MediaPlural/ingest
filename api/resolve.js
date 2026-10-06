@@ -20,9 +20,12 @@ module.exports = async (req, res) => {
   const url = new URL(req.url, "http://x");
   const { view, slug, file } = classify(url.pathname, req.headers);
   const host = ((req.headers.host || req.headers.Host || "") || "").toLowerCase();
-  const siteName = host.endsWith("viiy.to")
-    ? "viiy.to"
-    : SITE.name; // agnt.in crown — ingest.my / ingest.fm alias to it
+  // Host-aware site naming: our family serves under their own name (the
+  // crown agnt.in lands from Sedo transfer; until then fm/my/viiy are the
+  // live hosts and must not advertise a domain that doesn't answer yet).
+  const FAMILY = ["agnt.in", "ingest.fm", "ingest.my", "www.ingest.fm", "www.ingest.my"];
+  const personal = host.endsWith("viiy.to");
+  const siteName = FAMILY.includes(host) || personal ? host : SITE.name;
 
   // share_opened fires on every resolution (implementation-side; the spec
   // only names the events — how we record them is ours).
