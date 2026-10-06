@@ -180,7 +180,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   const body = `
 <div class="card">
   <h1>${esc(f.title)}</h1>
-  <div class="sub">A shareable-artifact package · INGEST.md convention · ${esc(siteName)}</div>
+  <div class="sub">A gest — a shareable package any agent can ingest · INGEST.md convention · ${esc(siteName)}</div>
   <div class="bluf">${esc(f.bluf)}</div>
   <div class="fp">sha256 fingerprint: ${esc(f.fp)}</div>
   <div class="fphint">verify after transfer — if it differs, the tree changed</div>

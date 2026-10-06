@@ -129,8 +129,9 @@ git clone {repo} ~/{name} && bash ~/{name}/install-everywhere.sh
 """
 
 def cmd_post(args):
-    """ingest post <dir> --url <share-url> [--repo <clone-url>] --embed
-    Emit the full post page: card + one-liner + paste blocks (share-post.html)."""
+    """ingest post <dir> --url <share-url> [--repo <clone-url>]
+    Emit the gest: card + one-liner + paste blocks in one page (share-post.html).
+    A gest is a tale carried — drop it into any agent and it ingests."""
     root = pathlib.Path(args.dir).resolve()
     md = find_manifest(root)
     if not md:
@@ -185,7 +186,7 @@ def main():
     c.add_argument("--url", default="", help="the package's public URL (og:url)")
     c.add_argument("--image", default="", help="the card image URL (og:image)")
     c.set_defaults(fn=cmd_card)
-    p = sub.add_parser("post", help="emit the full post page (card + one-liner + paste blocks)")
+    p = sub.add_parser("post", help="emit the gest page (card + one-liner + paste blocks)")
     p.add_argument("dir")
     p.add_argument("--url", required=True, help="the package share URL")
     p.add_argument("--repo", default="", help="the git clone URL for terminal blocks")
