@@ -2,6 +2,10 @@
   "version": 2,
   "buildCommand": "node tools/embed-packages.js",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/resolve.js" }
-  ]
+    {
+      "source": "/(.*)",
+      "destination": "/api/resolve.js"
+    }
+  ],
+  "outputDirectory": "landing"
 }

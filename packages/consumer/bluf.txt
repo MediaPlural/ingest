@@ -1,0 +1,1 @@
+MediaPlural/consumer — the knowledge consumer: point it at anything (website, course, zip, gdrive, email archive, the screen), and it becomes an attributed, queryable knowledge graph you can search, filter, author from, and export anywhere. Local-first, stdlib-only, MIT. One engine, every runtime: Hermes, Claude Code, Cursor, OpenClaw, VS Code, any MCP client.
