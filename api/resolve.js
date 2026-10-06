@@ -85,6 +85,22 @@ module.exports = async (req, res) => {
   return html(indexHTML(slugs, siteName));
 };
 
+
+// ── the post surface (v1.2): paste blocks on the card page ──────────
+// Clicking the post loads the code; pasting the URL works all the same.
+function pasteBlocks(slug, origin, repo) {
+  const url = `${origin}/${slug}`;
+  const r = repo || `https://github.com/MediaPlural/${slug}`;
+  return `
+<h2>Paste-ready (all equivalent)</h2>
+<p><b>Terminal:</b></p>
+<pre><code>git clone ${r} ~/${slug} && bash ~/${slug}/install.sh && python3 ~/${slug}/source.py &lt;target&gt; --full</code></pre>
+<p><b>Any AI agent:</b></p>
+<pre><code>Read ${url}/INGEST.md and execute its load order; it routes everything else.</code></pre>
+<p><b>Claude Code / Cursor / OpenClaw / VS Code / Hermes:</b></p>
+<pre><code>git clone ${r} ~/${slug} && bash ~/${slug}/install-everywhere.sh</code></pre>`;
+}
+
 // ── helpers ──────────────────────────────────────────────────────
 function readPackageFile(slug, file) {
   if (!slug) return null;
@@ -166,7 +182,8 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   <div class="fp">sha256 fingerprint: ${esc(f.fp)}</div>
   <div class="fphint">verify after transfer — if it differs, the tree changed</div>
   <div class="oneliner">For your agent: <b>Read ${canonical} at the artifact root and execute its load order; it routes everything else.</b></div>
-  <div class="files">${f.files.map((x) => `${esc(x.path)} — ${x.size} bytes`).join("<br>")}</div>
+  ${pasteBlocks(slug, origin, "")}
+  <div class="files">${f.files.map((x) => `${esc(x.path)} — ${esc(x.size)} bytes`).join("<br>")}</div>
   <p><a href="${manifestHref}">INGEST.md manifest →</a>${base ? ` · <a href="${base}/INGEST.md">absolute</a>` : ""} · <a href="${origin || "/"}">← host home</a></p>
 </div>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">

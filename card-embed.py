@@ -103,6 +103,79 @@ def cmd_card(args):
     return 0
 
 
+# ── v1.2: the post (paste-anywhere surface) ─────────────────────────────
+# The post = the card + the one-liner + per-platform paste blocks, in one
+# page. Clicking it loads code; pasting it (terminal or AI) works all the same.
+
+POST_BLOCKS_TEMPLATE = """
+## Paste-ready (all equivalent)
+
+**Terminal:**
+```bash
+git clone {repo} ~/{name} && bash ~/{name}/install.sh && python3 ~/{name}/source.py <target> --full
+```
+
+**Any AI agent:**
+```
+Read {url}/INGEST.md and execute its load order; it routes everything else.
+```
+
+**Claude Code / Cursor / OpenClaw / VS Code / Hermes:**
+```bash
+git clone {repo} ~/{name} && bash ~/{name}/install-everywhere.sh
+```
+
+**Browser:** open {url} — this page.
+"""
+
+def cmd_post(args):
+    """ingest post <dir> --url <share-url> [--repo <clone-url>] --embed
+    Emit the full post page: card + one-liner + paste blocks (share-post.html)."""
+    root = pathlib.Path(args.dir).resolve()
+    md = find_manifest(root)
+    if not md:
+        print(f"no {CANONICAL}/{ALIAS} in {root}", file=sys.stderr)
+        return 2
+    text = md.read_text(encoding="utf-8")
+    fp = (re.search(r"`([0-9a-f]{16})`", text) or [None, "—"])[1]
+    bluf = read_bluf(root)
+    name = root.name
+    blocks = POST_BLOCKS_TEMPLATE.format(repo=args.repo, name=name, url=args.url)
+    html = f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>{name} — INGEST.md post</title>
+<meta property="og:title" content="{name}">
+<meta property="og:description" content="{bluf[:180]}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{args.url}">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+ body {{ margin:0; background:#0d1117; color:#e6edf3;
+       font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; padding:8vh 24px; }}
+ .card {{ max-width:680px; margin:0 auto; }}
+ h1 {{ font-size:32px; }} .fp {{ color:#58a6ff; font-family:ui-monospace,monospace; font-size:14px; }}
+ .bluf {{ font-size:17px; line-height:1.6; color:#c9d1d9; }}
+ pre {{ background:#161b22; border:1px solid #30363d; border-radius:10px;
+       padding:14px 16px; overflow-x:auto; font-size:13px; }}
+ code, pre {{ font-family:ui-monospace,Menlo,Consolas,monospace; }}
+ h2 {{ color:#58a6ff; margin-top:36px; }}
+ .note {{ color:#8b949e; font-size:13px; }}
+</style></head><body><div class="card">
+<h1>{name}</h1>
+<p class="bluf">{bluf}</p>
+<p class="fp">sha256 fingerprint: {fp}</p>
+<h2>The one-liner (for any agent)</h2>
+<pre><code>Read {args.url}/INGEST.md and execute its load order; it routes everything else.</code></pre>
+{blocks.replace("## Paste-ready (all equivalent)", "<h2>Paste-ready (all equivalent)</h2>").replace("**Terminal:**", "<p><b>Terminal:</b></p>").replace("**Any AI agent:**", "<p><b>Any AI agent:</b></p>").replace("**Claude Code / Cursor / OpenClaw / VS Code / Hermes:**", "<p><b>Claude Code / Cursor / OpenClaw / VS Code / Hermes:</b></p>").replace("**Browser:**", "<p><b>Browser:</b></p>").replace("```bash", "<pre><code>").replace("```", "</code></pre>")}
+<p class="note">One package, every reader. Manifest: <a style="color:#58a6ff" href="{args.url}/INGEST.md">INGEST.md</a> · Convention: MediaPlural/ingest</p>
+</div></body></html>"""
+    out = root / "share-post.html"
+    out.write_text(html, encoding="utf-8")
+    print(f"post page written: {out}")
+    print(f"terminal card + paste blocks in one surface; share at {args.url}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(prog="ingest")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -112,6 +185,11 @@ def main():
     c.add_argument("--url", default="", help="the package's public URL (og:url)")
     c.add_argument("--image", default="", help="the card image URL (og:image)")
     c.set_defaults(fn=cmd_card)
+    p = sub.add_parser("post", help="emit the full post page (card + one-liner + paste blocks)")
+    p.add_argument("dir")
+    p.add_argument("--url", required=True, help="the package share URL")
+    p.add_argument("--repo", default="", help="the git clone URL for terminal blocks")
+    p.set_defaults(fn=cmd_post)
     args = ap.parse_args()
     return args.fn(args)
 
