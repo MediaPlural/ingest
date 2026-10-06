@@ -1,6 +1,7 @@
 // api/resolve.js — the UA-aware resolver (Vercel serverless function).
 // One URL, three readers: crawlers get OG, agents get the manifest, humans get the card.
-// Deployed identically at ingest.my (public reference host) and viiy.to (personal host).
+// Public crown: agnt.in ("agent ingest" — the AGENT-INGEST.md alias as a domain).
+// ingest.my + ingest.fm alias the crown; viiy.to is the personal host.
 
 const { classify, TRY } = require("./lib/classify.js");
 const PACKAGES = require("./lib/packages.generated.js");
@@ -10,7 +11,7 @@ const PACKAGES = require("./lib/packages.generated.js");
 // the resolver never touches the filesystem at runtime (cwd is / on Vercel).
 
 const SITE = {
-  name: "ingest.my",
+  name: "agnt.in",
   tagline: "INGEST.md — the shareable-artifact manifest convention",
   repo: "https://github.com/MediaPlural/ingest",
 };
@@ -21,9 +22,7 @@ module.exports = async (req, res) => {
   const host = ((req.headers.host || req.headers.Host || "") || "").toLowerCase();
   const siteName = host.endsWith("viiy.to")
     ? "viiy.to"
-    : host.endsWith("ingest.my") || host.endsWith("ingest.fm")
-      ? "ingest.my"
-      : process.env.SITE_NAME || SITE.name;
+    : SITE.name; // agnt.in crown — ingest.my / ingest.fm alias to it
 
   // share_opened fires on every resolution (implementation-side; the spec
   // only names the events — how we record them is ours).
@@ -106,10 +105,10 @@ function esc(s) {
 }
 
 function notFound(res, slug, file) {
-  const body = `<!doctype html><html><head><meta charset="utf-8"><title>not found — ingest.my</title></head>
+  const body = `<!doctype html><html><head><meta charset="utf-8"><title>not found — agnt.in</title></head>
 <body style="font-family:ui-monospace,monospace;background:#0d1117;color:#e6edf3;padding:8vh 24px">
 <h2>404</h2><p>No package <code>${esc(slug || "")}</code>${file ? ` / <code>${esc(file)}</code>` : ""} here.</p>
-<p><a style="color:#58a6ff" href="/">← ingest.my</a></p></body></html>`;
+<p><a style="color:#58a6ff" href="/">← agnt.in</a></p></body></html>`;
   res.writeHead(404, { "Content-Type": "" + "text/html; charset=utf-8" });
   res.end(body);
 }
