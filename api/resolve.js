@@ -38,6 +38,22 @@ module.exports = async (req, res) => {
     res.end(body);
   };
 
+  // ── static assets (the gest mark + OG card) ─────────────────────
+  if (url.pathname.startsWith("/assets/")) {
+    const file = url.pathname.slice("/assets/".length).replace(/[^a-zA-Z0-9._-]/g, "");
+    const raw = PACKAGES.assets && PACKAGES.assets[file];
+    if (raw) {
+      const isB64 = typeof raw === "string" && raw.startsWith("__b64__");
+      const body = isB64 ? Buffer.from(raw.slice(7), "base64") : Buffer.from(String(raw), "utf8");
+      res.writeHead(200, {
+        "Content-Type": file.endsWith(".svg") ? "image/svg+xml" : "image/png",
+        "Cache-Control": "public, max-age=86400", "Access-Control-Allow-Origin": "*",
+      });
+      return res.end(body);
+    }
+    return notFound(res, "assets", file);
+  }
+
   // ── package routes ─────────────────────────────────────────────
   if (view === "manifest") {
     const manifest = readPackageFile(slug, file || "INGEST.md");
@@ -158,13 +174,20 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
 <meta property="og:description" content="${esc(f.bluf1)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${esc(base)}">
-<meta property="og:image" content="${esc(m.image || "")}">
+<meta property="og:image" content="${esc(m.image || (origin + "/assets/og-card.png"))}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Share card: ${esc(f.title)}, one-paragraph summary, and sha256 fingerprint on a dark background.">
 <meta property="og:site_name" content="${esc(siteName)}">
 <meta name="twitter:card" content="summary_large_image">`;
+  const logoSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="34" height="34" style="border-radius:9px;background:#161b22">
+    <path d="M17 39 a15 15 0 0 0 30 0" fill="none" stroke="#58a6ff" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="32" cy="26" r="5.5" fill="#ff8c66"/>
+    <circle cx="32" cy="17.5" r="1.8" fill="#ff8c66" opacity="0.35"/>
+  </svg>`;
   const style = `<style>
+  .brand { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+  .brand .name { font-family:ui-monospace,Menlo,Consolas,monospace; color:#8b949e; font-size:14px; letter-spacing:0.06em; }
   body { margin:0; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:#0d1117; color:#e6edf3; }
   .card { max-width:640px; margin:8vh auto; padding:0 24px 48px; }
   h1 { font-size:34px; margin:0 0 8px; } .sub { color:#8b949e; font-size:15px; margin-bottom:28px; }
@@ -179,6 +202,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
 </style>`;
   const body = `
 <div class="card">
+  <div class="brand">${logoSVG}<span class="name">gest · INGEST.md</span></div>
   <h1>${esc(f.title)}</h1>
   <div class="sub">A gest — a shareable package any agent can ingest · INGEST.md convention · ${esc(siteName)}</div>
   <div class="bluf">${esc(f.bluf)}</div>
@@ -190,6 +214,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   <p><a href="${manifestHref}">INGEST.md manifest →</a>${base ? ` · <a href="${base}/INGEST.md">absolute</a>` : ""} · <a href="${origin || "/"}">← host home</a></p>
 </div>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230d1117%27/%3E%3Cpath d=%27M17 39 a15 15 0 0 0 30 0%27 fill=%27none%27 stroke=%27%2358a6ff%27 stroke-width=%273.5%27 stroke-linecap=%27round%27/%3E%3Ccircle cx=%2732%27 cy=%2726%27 r=%275.5%27 fill=%27%23ff8c66%27/%3E%3C/svg%3E">
 <title>${esc(f.title)} — ${esc(siteName)}</title>${ogBlock}${style}
 </head><body>${body}</body></html>`;
 }
