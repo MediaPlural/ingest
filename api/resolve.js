@@ -50,7 +50,12 @@ module.exports = async (req, res) => {
   if (view === "og" || view === "card") {
     const manifest = readPackageFile(slug, "INGEST.md");
     if (!manifest) return notFound(res, slug);
-    const cardPage = cardHTML(manifest, { ogOnly: view === "og", siteName });
+    const cardPage = cardHTML(manifest, {
+      ogOnly: view === "og",
+      siteName,
+      slug,
+      origin: `https://${host}`,
+    });
     return html(cardPage);
   }
 
@@ -122,14 +127,18 @@ function manifestFields(text) {
   return { fp, bluf: bluf.replace(/\s+/g, " ").trim(), bluf1, files, title };
 }
 
-function cardHTML(m, { ogOnly = false, siteName } = {}) {
+function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   const f = manifestFields(m.text);
   const canonical = m.text.includes("AGENT-INGEST.md") ? "INGEST.md" : "INGEST.md";
+  // Absolute share URLs — relative links break at no-trailing-slash package URLs
+  // (Reader-style proxies and LLMs follow links verbatim).
+  const base = slug && origin ? `${origin}/${slug}` : "";
+  const manifestHref = base ? `${base}/INGEST.md` : "./INGEST.md";
   const ogBlock = `
 <meta property="og:title" content="${esc(f.title)}">
 <meta property="og:description" content="${esc(f.bluf1)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="${esc(m.url || "")}">
+<meta property="og:url" content="${esc(base)}">
 <meta property="og:image" content="${esc(m.image || "")}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -158,7 +167,7 @@ function cardHTML(m, { ogOnly = false, siteName } = {}) {
   <div class="fphint">verify after transfer — if it differs, the tree changed</div>
   <div class="oneliner">For your agent: <b>Read ${canonical} at the artifact root and execute its load order; it routes everything else.</b></div>
   <div class="files">${f.files.map((x) => `${esc(x.path)} — ${x.size} bytes`).join("<br>")}</div>
-  <p><a href="./INGEST.md">INGEST.md manifest →</a> · <a href="/">← host home</a></p>
+  <p><a href="${manifestHref}">INGEST.md manifest →</a>${base ? ` · <a href="${base}/INGEST.md">absolute</a>` : ""} · <a href="${origin || "/"}">← host home</a></p>
 </div>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>${esc(f.title)} — ${esc(siteName)}</title>${ogBlock}${style}

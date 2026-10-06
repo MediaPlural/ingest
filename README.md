@@ -57,4 +57,4 @@ SPEC.md defines three events *semantically* — `share_sent`, `share_opened`, `a
 
 ## Prior art & kin (honest)
 
-`AGENTS.md` owns repo-instruction conventions; `llms.txt` owns site digests; A2A owns the Agent Card. INGEST.md claims the unclaimed lane: **the shareable-ingest manifest** — what an agent reads when an artifact *arrives*, not when it's hosted.
+`AGENTS.md` owns repo-instruction conventions; `llms.txt` and Jina Reader (`r.jina.ai`) own hosted-URL → LLM-readable conversion; A2A owns the Agent Card. INGEST.md claims the unclaimed lane: **the shareable-ingest manifest** — what an agent reads when an artifact *arrives*, not when it's hosted.
