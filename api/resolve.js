@@ -1,6 +1,6 @@
 // api/resolve.js — the UA-aware resolver (Vercel serverless function).
 // One URL, three readers: crawlers get OG, agents get the manifest, humans get the card.
-// Deployed identically at ingest.fm (public reference host) and viiy.to (personal host).
+// Deployed identically at ingest.my (public reference host) and viiy.to (personal host).
 
 const { classify, TRY } = require("./lib/classify.js");
 const PACKAGES = require("./lib/packages.generated.js");
@@ -10,7 +10,7 @@ const PACKAGES = require("./lib/packages.generated.js");
 // the resolver never touches the filesystem at runtime (cwd is / on Vercel).
 
 const SITE = {
-  name: "ingest.fm",
+  name: "ingest.my",
   tagline: "INGEST.md — the shareable-artifact manifest convention",
   repo: "https://github.com/MediaPlural/ingest",
 };
@@ -18,7 +18,12 @@ const SITE = {
 module.exports = async (req, res) => {
   const url = new URL(req.url, "http://x");
   const { view, slug, file } = classify(url.pathname, req.headers);
-  const siteName = process.env.SITE_NAME || SITE.name;
+  const host = ((req.headers.host || req.headers.Host || "") || "").toLowerCase();
+  const siteName = host.endsWith("viiy.to")
+    ? "viiy.to"
+    : host.endsWith("ingest.my") || host.endsWith("ingest.fm")
+      ? "ingest.my"
+      : process.env.SITE_NAME || SITE.name;
 
   // share_opened fires on every resolution (implementation-side; the spec
   // only names the events — how we record them is ours).
@@ -101,10 +106,10 @@ function esc(s) {
 }
 
 function notFound(res, slug, file) {
-  const body = `<!doctype html><html><head><meta charset="utf-8"><title>not found — ingest.fm</title></head>
+  const body = `<!doctype html><html><head><meta charset="utf-8"><title>not found — ingest.my</title></head>
 <body style="font-family:ui-monospace,monospace;background:#0d1117;color:#e6edf3;padding:8vh 24px">
 <h2>404</h2><p>No package <code>${esc(slug || "")}</code>${file ? ` / <code>${esc(file)}</code>` : ""} here.</p>
-<p><a style="color:#58a6ff" href="/">← ingest.fm</a></p></body></html>`;
+<p><a style="color:#58a6ff" href="/">← ingest.my</a></p></body></html>`;
   res.writeHead(404, { "Content-Type": "" + "text/html; charset=utf-8" });
   res.end(body);
 }
