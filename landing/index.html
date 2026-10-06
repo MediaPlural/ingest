@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>INGEST.md — the shareable-artifact manifest convention</title>
+<meta name="description" content="An artifact that travels with its own machine digest. One manifest — BLUF, load order, file map, sha256 fingerprint — so the receiving agent knows what it holds, in what order to consume it, and whether the bytes are intact.">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="INGEST.md — the shareable-artifact manifest convention">
+<meta property="og:description" content="An artifact that travels with its own machine digest. The convention home: explainer, spec, license, reference CLI, live host.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ingest.org">
+<meta property="og:site_name" content="INGEST.md — the shareable-artifact manifest convention">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:#0d1117; color:#e6edf3; line-height:1.65; }
+  .wrap { max-width:760px; margin:0 auto; padding:10vh 24px 12vh; }
+  h1 { font-size:40px; line-height:1.2; margin:0 0 12px; }
+  h2 { font-size:22px; margin:48px 0 12px; color:#58a6ff; }
+  .sub { color:#8b949e; font-size:18px; margin-bottom:40px; }
+  code { background:#161b22; border:1px solid #30363d; border-radius:6px; padding:2px 7px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:0.92em; }
+  pre { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:18px 20px; overflow-x:auto; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13.5px; line-height:1.7; }
+  pre code { border:none; padding:0; background:none; }
+  a { color:#58a6ff; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .pill { display:inline-block; background:#1f6feb33; border:1px solid #1f6feb; color:#79c0ff; border-radius:99px; padding:3px 12px; font-size:13px; margin-right:8px; }
+  table { border-collapse:collapse; width:100%; font-size:14.5px; }
+  td, th { border:1px solid #30363d; padding:8px 12px; text-align:left; }
+  th { background:#161b22; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:28px 0; }
+  .box { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:18px; }
+  .box h3 { margin:0 0 8px; font-size:15px; color:#8b949e; text-transform:uppercase; letter-spacing:.05em; }
+  .box p { margin:0; font-size:14px; color:#c9d1d9; }
+  footer { margin-top:72px; padding-top:24px; border-top:1px solid #30363d; color:#8b949e; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>INGEST.md</h1>
+  <div class="sub">The shareable-artifact manifest convention.<br>An artifact that travels with its own machine digest.</div>
+
+  <p>When you share a package — a report, a code deliverable, a research corpus, a video + docs bundle — the human gets a link. But their <em>agent</em> gets nothing: no summary it can trust, no file order it can follow, no way to know the tree it fetched is the tree you sent.</p>
+
+  <p><b>INGEST.md is the missing convention: a machine-readable manifest at the artifact root.</b> The receiving agent reads one file and knows exactly what it holds, in what order to consume it, and whether the bytes are intact.</p>
+
+  <div class="two">
+    <div class="box"><h3>Human surface</h3><p>share card: title + BLUF + link. The share card unfurls as a designed card on X, Discord, Slack, LinkedIn.</p></div>
+    <div class="box"><h3>Machine surface</h3><p>INGEST.md manifest: BLUF, load order, file map, sha256 fingerprint. The one-liner hands it to the recipient's agent.</p></div>
+  </div>
+
+  <h2>The one-liner</h2>
+  <pre><code>Read INGEST.md at the artifact root and execute its load order; it routes everything else.</code></pre>
+
+  <h2>Why adopt instead of rebuild</h2>
+  <ul>
+    <li><b>The file is the SDK.</b> The reference CLI generates, verifies, and renders the manifest — stdlib-only Python, zero dependencies, no account, no service.</li>
+    <li><b>Composable-minimal spec.</b> One required section (the <b>load order</b>), a small required field set (fingerprint, file map). Everything else degrades gracefully.</li>
+    <li><b>Two names, one format.</b> <code>INGEST.md</code> is canonical; <code>AGENT-INGEST.md</code> is a registered alias validating against the same schema.</li>
+    <li><b>Schemas travel with the format.</b> The manifest schema and the event vocabulary (<code>share_sent</code> / <code>share_opened</code> / <code>agent_ingested</code>) ship with the spec.</li>
+  </ul>
+
+  <h2>The three events (named, not prescribed)</h2>
+  <table>
+    <tr><th>Event</th><th>Meaning</th></tr>
+    <tr><td><code>share_sent</code></td><td>The artifact was sent by its sharer (carries artifact id, fingerprint, channel).</td></tr>
+    <tr><td><code>share_opened</code></td><td>The share surface was opened by a recipient.</td></tr>
+    <tr><td><code>agent_ingested</code></td><td>The receiving <em>agent</em> fetched the manifest and executed the load order — the machine analog of "received and read".</td></tr>
+  </table>
+
+  <h2>Live host</h2>
+  <p>Armed packages resolve at <a href="https://ingest.fm">ingest.fm</a> — one URL, three readers: crawlers get the unfurl, humans get the card, agents get the manifest. Try the playground: <a href="https://ingest.fm/try">ingest.fm/try</a>.</p>
+
+  <h2>Quick start</h2>
+  <pre><code>git clone https://github.com/MediaPlural/ingest
+cd ingest
+python3 ingest.py init ./my-package --bluf bluf.txt
+python3 ingest.py verify ./my-package
+python3 ingest.py card ./my-package</code></pre>
+
+  <h2>License</h2>
+  <p>Spec text: <b>CC-BY 4.0</b>. Reference code: <b>Apache 2.0</b>. The convention is freely implementable; attribution rides every copy.</p>
+
+  <h2>Prior art &amp; kin (honest)</h2>
+  <p><code>AGENTS.md</code> owns repo-instruction conventions; <code>llms.txt</code> owns site digests; A2A owns the Agent Card. INGEST.md claims the unclaimed lane: <b>the shareable-ingest manifest</b> — what an agent reads when an artifact <em>arrives</em>, not when it's hosted.</p>
+
+  <footer>
+    <a href="https://github.com/MediaPlural/ingest">GitHub — MediaPlural/ingest</a> ·
+    <a href="https://ingest.fm">Live host — ingest.fm</a> ·
+    Spec v1.0 · CC-BY 4.0 / Apache 2.0
+  </footer>
+</div>
+</body>
+</html>
