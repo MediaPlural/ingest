@@ -2,11 +2,12 @@
 // One URL, three readers: crawlers get OG, agents get the manifest, humans get the card.
 // Deployed identically at ingest.fm (public reference host) and viiy.to (personal host).
 
-const { classify } = require("./lib/classify.js");
+const { classify, TRY } = require("./lib/classify.js");
+const PACKAGES = require("./lib/packages.generated.js");
 
-// In production, slugs map to package dirs under /packages. Locally and in the
-// playground these are the same shape — the resolver never needs to know.
-const PACKAGES_ROOT = process.env.PACKAGES_ROOT || "packages";
+// In production, slugs map to package dirs under /packages at build time —
+// tools/embed-packages.js bakes them into api/lib/packages.generated.js, so
+// the resolver never touches the filesystem at runtime (cwd is / on Vercel).
 
 const SITE = {
   name: "ingest.fm",
@@ -32,7 +33,7 @@ module.exports = async (req, res) => {
 
   // ── package routes ─────────────────────────────────────────────
   if (view === "manifest") {
-    const manifest = await readPackageFile(slug, file || "INGEST.md");
+    const manifest = readPackageFile(slug, file || "INGEST.md");
     if (!manifest) return notFound(res, slug);
     res.writeHead(200, {
       "Content-Type": "text/markdown; charset=utf-8",
@@ -43,7 +44,7 @@ module.exports = async (req, res) => {
   }
 
   if (view === "og" || view === "card") {
-    const manifest = await readPackageFile(slug, "INGEST.md");
+    const manifest = readPackageFile(slug, "INGEST.md");
     if (!manifest) return notFound(res, slug);
     const cardPage = cardHTML(manifest, { ogOnly: view === "og", siteName });
     return html(cardPage);
@@ -59,40 +60,40 @@ module.exports = async (req, res) => {
       ".zip": "application/zip", ".py": "text/plain", ".js": "text/javascript",
     };
     const ext = file.slice(file.lastIndexOf(".")).toLowerCase();
-    const blob = await readPackageFile(slug, file);
+    const blob = readPackageFile(slug, file);
     res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream", "Access-Control-Allow-Origin": "*" });
     return res.end(blob.text);
   }
 
+  // ── playground ────────────────────────────────────────────────
+  if (view === TRY) {
+    const origin = `https://${siteName}`;
+    return html(tryHTML(origin, siteName));
+  }
+
   // ── index ──────────────────────────────────────────────────────
-  const slugs = await listSlugs();
+  const slugs = listSlugs();
   return html(indexHTML(slugs, siteName));
 };
 
 // ── helpers ──────────────────────────────────────────────────────
-async function readPackageFile(slug, file) {
+function readPackageFile(slug, file) {
   if (!slug) return null;
-  const safeSlug = slug.replace(/[^a-zA-Z0-9._-]/g, "");
+  const safeSlug = String(slug).replace(/[^a-zA-Z0-9._-]/g, "");
   const safeFile = (file || "").replace(/[^a-zA-Z0-9._\/-]/g, "").replace(/\.+/g, ".").replace(/\/{2,}/g, "/");
   if (!safeSlug || !safeFile || safeFile.includes("..")) return null;
-  try {
-    const fs = require("fs/promises");
-    const p = `${PACKAGES_ROOT}/${safeSlug}/${safeFile}`;
-    const text = await fs.readFile(p, "utf8");
-    return { text };
-  } catch {
-    return null;
-  }
+  const entry = PACKAGES[safeSlug];
+  if (!entry) return null;
+  const raw = entry[safeFile];
+  if (raw == null) return null;
+  const text = typeof raw === "string" && raw.startsWith("__b64__")
+    ? Buffer.from(raw.slice(7), "base64").toString("utf8")
+    : raw;
+  return { text };
 }
 
-async function listSlugs() {
-  try {
-    const fs = require("fs/promises");
-    const entries = await fs.readdir(PACKAGES_ROOT);
-    return entries.filter((d) => !d.startsWith("."));
-  } catch {
-    return [];
-  }
+function listSlugs() {
+  return Object.keys(PACKAGES);
 }
 
 function esc(s) {
@@ -158,6 +159,59 @@ function cardHTML(m, { ogOnly = false, siteName } = {}) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>${esc(f.title)} — ${esc(siteName)}</title>${ogBlock}${style}
 </head><body>${body}</body></html>`;
+}
+
+function tryHTML(origin, siteName) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>try — the INGEST.md playground</title>
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="INGEST.md playground — try the three-reader URL">
+<meta property="og:description" content="One URL, three readers. See the classifier decide: crawlers get the unfurl, humans get the card, agents get the manifest.">
+<style>
+  body { margin:0; font-family:ui-monospace,Menlo,Consolas,monospace; background:#0d1117; color:#e6edf3; padding:8vh 6vw; line-height:1.7; }
+  h1 { font-size:26px; } h2 { font-size:18px; color:#58a6ff; margin-top:40px; }
+  pre { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:16px 18px; overflow-x:auto; font-size:13px; }
+  a { color:#58a6ff; text-decoration:none; }
+  .note { color:#8b949e; font-size:13px; }
+  table { border-collapse:collapse; margin-top:12px; font-size:14px; }
+  td, th { border:1px solid #30363d; padding:7px 12px; }
+  th { background:#161b22; }
+</style>
+</head><body>
+<h1>try — the playground</h1>
+<p>One URL, three readers. The classifier is deterministic and inspectable: <a href="https://github.com/MediaPlural/ingest/blob/main/api/lib/classify.js">api/lib/classify.js</a>.</p>
+
+<h2>1 — the same URL, three ways</h2>
+<table>
+  <tr><th>You send</th><th>You get</th></tr>
+  <tr><td><code>curl ${origin}/agentic-testing</code></td><td>the manifest (machine surface)</td></tr>
+  <tr><td>a browser visit to <code>${origin}/agentic-testing</code></td><td>the card page (human surface)</td></tr>
+  <tr><td>paste <code>${origin}/agentic-testing</code> into X / Discord / Slack</td><td>the unfurl (crawler surface — OG + twitter:card)</td></tr>
+</table>
+
+<h2>2 — try it from your terminal</h2>
+<pre><code># the machine surface (an agent's view)
+curl -A "curl/8.4" ${origin}/agentic-testing
+
+# the human surface
+open ${origin}/agentic-testing
+
+# the crawler surface (what X/Discord fetch)
+curl -A "Twitterbot/1.0" ${origin}/agentic-testing | head -20</code></pre>
+
+<h2>3 — the one-liner, live</h2>
+<pre><code>Read ${origin}/agentic-testing/INGEST.md and execute its load order; it routes everything else.</code></pre>
+<p class="note">Your agent fetches the manifest, executes the load order, and the whole package routes from one line. That is the entire convention.</p>
+
+<h2>4 — arm your own</h2>
+<pre><code>git clone https://github.com/MediaPlural/ingest
+cd ingest
+python3 ingest.py init ./my-package --bluf bluf.txt
+python3 tools/arm.py ./my-package --slug my-package --url ${origin}/my-package</code></pre>
+<p class="note">The arming tool copies the artifact set into the host's packages/ dir and stamps the share URL. The manifest stays the single source of truth.</p>
+
+<p><a href="/">← host home</a></p>
+</body></html>`;
 }
 
 function indexHTML(slugs, siteName) {
