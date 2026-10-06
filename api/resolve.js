@@ -17,7 +17,12 @@ const SITE = {
 module.exports = async (req, res) => {
   const url = new URL(req.url, "http://x");
   const { view, slug, file } = classify(url.pathname, req.headers);
-  const siteName = process.env.SITE_NAME || SITE.name;
+  const host = ((req.headers.host || req.headers.Host || "") || "").toLowerCase();
+  const siteName = host.endsWith("viiy.to")
+    ? "viiy.to"
+    : host.endsWith("ingest.fm")
+      ? "ingest.fm"
+      : process.env.SITE_NAME || SITE.name;
 
   // share_opened fires on every resolution (implementation-side; the spec
   // only names the events — how we record them is ours).
