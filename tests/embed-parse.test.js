@@ -19,7 +19,7 @@ const MANIFEST = `# INGEST.md — machine manifest for \`agentic-testing\`
 
 The answer as a working harness: 6-tier CI ladder, personas, attack fixtures, panels.
 
-## Quip
+## Tagline
 
 > the build gate stays red until every attack is caught — that's the whole personality
 
@@ -33,12 +33,12 @@ The answer as a working harness: 6-tier CI ladder, personas, attack fixtures, pa
 **Prompt form:** Read \`INGEST.md\` at the artifact root and execute its load order; it routes everything else.
 `;
 
-test("parseManifest extracts fingerprint, title, bluf, quip, files, visibility", () => {
+test("parseManifest extracts fingerprint, title, bluf, tagline, files, visibility", () => {
   const m = parseManifest(MANIFEST);
   assert.equal(m.fp, "42b5d7f1a7501cf3");
   assert.equal(m.title, "agentic-testing");
   assert.match(m.bluf, /working harness/);
-  assert.match(m.quip, /the build gate stays red/);
+  assert.match(m.tagline, /the build gate stays red/);
   assert.equal(m.files.length, 2);
   assert.equal(m.files[0].path, "docs/README.md");
   assert.equal(m.vis, "unlisted");

@@ -142,6 +142,12 @@ module.exports = async (req, res) => {
     return res.end(blob.text);
   }
 
+  // ── the demo page — the embed, live, on our own host ───────────
+  if (url.pathname === "/demo") {
+    const origin = `https://${siteName}`;
+    return html(demoHTML(origin, siteName));
+  }
+
   // ── playground ────────────────────────────────────────────────
   if (view === TRY) {
     const origin = `https://${siteName}`;
@@ -194,9 +200,11 @@ function esc(s) {
 }
 
 function notFound(res, slug, file) {
+  // quip (the Sept-19 microcopy law): our lingo at the touchpoints
   const body = `<!doctype html><html><head><meta charset="utf-8"><title>not found — agnt.in</title></head>
 <body style="font-family:ui-monospace,monospace;background:#0d1117;color:#e6edf3;padding:8vh 24px">
-<h2>404</h2><p>No package <code>${esc(slug || "")}</code>${file ? ` / <code>${esc(file)}</code>` : ""} here.</p>
+<h2>404</h2><p><i>even the best tales wander off sometimes</i></p>
+<p>No package <code>${esc(slug || "")}</code>${file ? ` / <code>${esc(file)}</code>` : ""} here.</p>
 <p><a style="color:#58a6ff" href="/">← agnt.in</a></p></body></html>`;
   res.writeHead(404, { "Content-Type": "" + "text/html; charset=utf-8" });
   res.end(body);
@@ -208,7 +216,8 @@ function manifestFields(text) {
   const bluf1 = bluf.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/)[0] || bluf.slice(0, 160);
   const files = [...text.matchAll(/^- `([^`]+)` — ([\d,]+) bytes/gm)].map((m) => ({ path: m[1], size: m[2] }));
   const title = (text.match(/^# INGEST\.md — machine manifest for `([^`]+)`/) || [])[1] || "package";
-  return { fp, bluf: bluf.replace(/\s+/g, " ").trim(), bluf1, files, title };
+  const tagline = (text.match(/## (?:Tagline|Quip)\s*\n\n> ?(.+)/) || [])[1] || "";
+  return { fp, bluf: bluf.replace(/\s+/g, " ").trim(), bluf1, files, title, tagline };
 }
 
 function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
@@ -240,6 +249,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   body { margin:0; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:#0d1117; color:#e6edf3; }
   .card { max-width:640px; margin:8vh auto; padding:0 24px 48px; }
   h1 { font-size:34px; margin:0 0 8px; } .sub { color:#8b949e; font-size:15px; margin-bottom:28px; }
+  .tagline { color:#79c0ff; font-style:italic; font-size:16px; margin:-14px 0 22px; }
   .bluf { font-size:17px; line-height:1.6; color:#c9d1d9; margin-bottom:28px; }
   .fp { font-family:ui-monospace,Menlo,Consolas,monospace; color:#58a6ff; font-size:14px; }
   .fphint { color:#8b949e; font-size:12px; font-style:italic; margin:4px 0 32px; }
@@ -254,6 +264,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   <div class="brand"><img src="/assets/owl-brand-48.png" width="40" height="40" alt="The Watchman owl — the gest mark" style="image-rendering:-webkit-optimize-contrast"><span class="name">gest · INGEST.md</span></div>
   <h1>${esc(f.title)}</h1>
   <div class="sub">A gest — a shareable package any agent can ingest · INGEST.md convention · ${esc(siteName)}</div>
+  ${f.tagline ? `<div class="tagline">&gt; ${esc(f.tagline)}</div>` : ""}
   <div class="bluf">${esc(f.bluf)}</div>
   <div class="fp">sha256 fingerprint: ${esc(f.fp)}</div>
   <div class="fphint">verify after transfer — if it differs, the tree changed</div>
@@ -318,6 +329,40 @@ python3 tools/arm.py ./my-package --slug my-package --url ${origin}/my-package</
 <p class="note">The arming tool copies the artifact set into the host's packages/ dir and stamps the share URL. The manifest stays the single source of truth.</p>
 
 <p><a href="/">← host home</a></p>
+</body></html>`;
+}
+
+function demoHTML(origin, siteName) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>demo — the gest embed, live</title>
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="The gest embed — live demo">
+<meta property="og:description" content="Drop two lines on any site and the gest lands: the card renders inline, the sandbox opens, the install is one click.">
+<style>
+  body { margin:0; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:#0d1117; color:#e6edf3; padding:6vh 6vw; line-height:1.7; }
+  h1 { font-size:26px; } h2 { font-size:17px; color:#58a6ff; margin-top:44px; }
+  pre { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:16px 18px; overflow-x:auto; font-size:13px; }
+  a { color:#58a6ff; text-decoration:none; }
+  .note { color:#8b949e; font-size:13px; }
+  .quip { color:#79c0ff; font-style:italic; font-size:13.5px; }
+</style>
+</head><body>
+<h1>demo — the gest embed, live</h1>
+<p class="quip">&gt; this page eats its own cooking — the card below is the widget, running</p>
+
+<h2>1 — the two lines</h2>
+<pre>&lt;div data-ingest="${origin}/agentic-testing"&gt;&lt;/div&gt;
+&lt;script src="${origin}/embed.js"&gt;&lt;/script&gt;</pre>
+<p class="note">That's the whole integration. No build step, no account, no framework.</p>
+
+<h2>2 — what your visitors see</h2>
+<div data-ingest="${origin}/agentic-testing"></div>
+<script src="/embed.js"></script>
+
+<h2>3 — inside the sandbox</h2>
+<p class="note">Click the card. The sandbox modal opens: the tale file-by-file, the one-click install (zip + OS-aware CLI line), the one-liner to copy. Every word in our lingo — the quips ride every touchpoint.</p>
+
+<p><a href="/">← host home</a> · <a href="/try">the playground →</a></p>
 </body></html>`;
 }
 

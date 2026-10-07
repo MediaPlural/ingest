@@ -15,7 +15,7 @@
 
 The answer to "how do we do agentic testing of the sales engine" as a working harness: 6-tier CI ladder (unit → PG-IT → keyless eval → keyed eval with pass^k → replay/shadow → live test), 10 adversarial + 4 dimensional personas, 11 attack fixtures all caught by named checks, 8 new deterministic rubric checks, experience + corpus-health panels, and the ops runbook + lifecycle maps. Ships as refurbapp PR #1162 (45 files, all gates green: 133/133 tests, typecheck clean, attack mode 11/11 caught). Read in order: the runbook first, then the lifecycle maps, then the README.
 
-## Quip
+## Tagline
 
 > the build gate stays red until every attack is caught
 

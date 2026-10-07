@@ -38,6 +38,21 @@
     unknown: "python3 ingest.py verify <dir>",
   };
 
+  // ── the quips (brand-lingo microcopy at UI touchpoints — the Sept-19
+  //    directive: "playful quips in our lingo at UI touchpoints") ──
+  var QUIPS = {
+    cardFooter: "the tale, boxed — click to ungest it",
+    download:   "⬇ Download .zip — carry the tale home",
+    copy:       "⧉ Copy the one-liner",
+    copied:     "✓ the one-liner is yours now",
+    installFor: "how this gest lands on your machine:",
+    verifyHint: "then ask the bytes if they're the same bytes",
+    openPage:   "open the share page ↗",
+    closeHint:  "esc — the tale waits",
+    error:      "this gest got lost between the wells — the host didn't answer",
+    empty:      "no gest here yet — arm one and it lands"
+  };
+
   function esc(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
@@ -47,12 +62,12 @@
     var fp = (text.match(/`([0-9a-f]{16})`/) || [])[1] || "";
     var title = (text.match(/^# INGEST\.md — machine manifest for `([^`]+)`/m) || [])[1] || "package";
     var bluf = (text.match(/## BLUF\s*\n\n([\s\S]+?)(?:\n\n## |$)/) || [])[1] || "";
-    var quip = (text.match(/## Quip\s*\n\n> ?(.+)/) || [])[1] || "";
+    var tagline = (text.match(/## (?:Tagline|Quip)\s*\n\n> ?(.+)/) || [])[1] || "";
     var files = [];
     var re = /^- `([^`]+)` — ([\d,]+) bytes/gm, m2;
     while ((m2 = re.exec(text))) files.push({ path: m2[1], size: m2[2] });
     var vis = (text.match(/\*\*Visibility:\*\* ([a-z]+)/) || [])[1] || "unlisted";
-    return { fp: fp, title: title, bluf: bluf.trim(), quip: quip, files: files, vis: vis };
+    return { fp: fp, title: title, bluf: bluf.trim(), tagline: tagline, files: files, vis: vis };
   }
 
   // ── the inline card ──
@@ -62,11 +77,11 @@
         '<div style="padding:16px 18px 12px">' +
           '<div style="font-size:15px;font-weight:600">' + esc(pkg.title) + '</div>' +
           '<div style="font-size:13px;color:#8b949e;margin-top:4px">' + esc(url) + ' · ' + pkg.files.length + ' files · ' + esc(pkg.vis) + '</div>' +
-          (pkg.quip ? '<div style="font-size:13px;color:#79c0ff;margin-top:8px;font-style:italic">&gt; ' + esc(pkg.quip) + '</div>' : '') +
+          (pkg.tagline ? '<div style="font-size:13px;color:#79c0ff;margin-top:8px;font-style:italic">&gt; ' + esc(pkg.tagline) + '</div>' : '') +
           '<div style="font-size:13.5px;line-height:1.55;color:#c9d1d9;margin-top:10px">' + esc(pkg.bluf.slice(0, 220)) + (pkg.bluf.length > 220 ? '…' : '') + '</div>' +
           '<div style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#58a6ff;margin-top:10px">sha256 ' + esc(pkg.fp) + '</div>' +
         '</div>' +
-        '<div style="padding:10px 18px;border-top:1px solid #30363d;background:#161b22;font-size:12.5px;color:#8b949e">click to open the sandbox — browse + one-click install</div>' +
+        '<div style="padding:10px 18px;border-top:1px solid #30363d;background:#161b22;font-size:12.5px;color:#8b949e">' + esc(QUIPS.cardFooter) + '</div>' +
       '</div>';
   }
 
@@ -81,23 +96,23 @@
       '<div id="ingest-modal-back" style="position:fixed;inset:0;background:rgba(1,4,9,.72);backdrop-filter:blur(3px);z-index:2147483000;display:flex;align-items:center;justify-content:center">' +
         '<div style="width:min(720px,92vw);max-height:84vh;overflow:auto;background:#0d1117;border:1px solid #30363d;border-radius:14px;color:#e6edf3;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' +
           '<div style="position:sticky;top:0;background:#161b22;padding:14px 20px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between;align-items:center">' +
-            '<div><div style="font-size:16px;font-weight:600">' + esc(pkg.title) + '</div>' +
-            '<div style="font-size:12px;color:#8b949e;font-family:ui-monospace,Menlo,monospace">sha256 ' + esc(pkg.fp) + '</div></div>' +
-            '<button id="ingest-close" style="background:none;border:1px solid #30363d;color:#e6edf3;border-radius:7px;padding:5px 12px;cursor:pointer">esc ✕</button>' +
+          '<div><div style="font-size:16px;font-weight:600">' + esc(pkg.title) + '</div>' +
+          '<div style="font-size:12px;color:#8b949e;font-family:ui-monospace,Menlo,monospace">sha256 ' + esc(pkg.fp) + '</div></div>' +
+          '<button id="ingest-close" title="' + esc(QUIPS.closeHint) + '" style="background:none;border:1px solid #30363d;color:#e6edf3;border-radius:7px;padding:5px 12px;cursor:pointer">esc ✕</button>' +
           '</div>' +
           '<div style="padding:18px 20px">' +
-            (pkg.quip ? '<div style="font-style:italic;color:#79c0ff;font-size:13.5px;margin-bottom:12px">&gt; ' + esc(pkg.quip) + '</div>' : '') +
+            (pkg.tagline ? '<div style="font-style:italic;color:#79c0ff;font-size:13.5px;margin-bottom:12px">&gt; ' + esc(pkg.tagline) + '</div>' : '') +
             '<div style="font-size:13.5px;line-height:1.6;color:#c9d1d9">' + esc(pkg.bluf) + '</div>' +
             '<div style="margin-top:18px;font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:.05em">the artifact set</div>' +
             '<div style="margin-top:8px;border:1px solid #30363d;border-radius:10px;overflow:hidden">' + fileRows + '</div>' +
             '<div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap">' +
-              '<a id="ingest-zip" href="' + esc(url + '/archive.zip') + '" style="text-decoration:none;background:#238636;color:#fff;padding:10px 18px;border-radius:8px;font-size:13.5px;font-weight:600">⬇ Download .zip</a>' +
-              '<button id="ingest-copy" style="background:#21262d;border:1px solid #30363d;color:#e6edf3;padding:10px 18px;border-radius:8px;font-size:13.5px;cursor:pointer">⧉ Copy the one-liner</button>' +
-              '<a href="' + esc(url) + '" target="_blank" style="text-decoration:none;background:none;border:1px solid #30363d;color:#58a6ff;padding:10px 18px;border-radius:8px;font-size:13.5px">Open share page ↗</a>' +
+              '<a id="ingest-zip" href="' + esc(url + '/archive.zip') + '" style="text-decoration:none;background:#238636;color:#fff;padding:10px 18px;border-radius:8px;font-size:13.5px;font-weight:600">' + esc(QUIPS.download) + '</a>' +
+              '<button id="ingest-copy" style="background:#21262d;border:1px solid #30363d;color:#e6edf3;padding:10px 18px;border-radius:8px;font-size:13.5px;cursor:pointer">' + esc(QUIPS.copy) + '</button>' +
+              '<a href="' + esc(url) + '" target="_blank" style="text-decoration:none;background:none;border:1px solid #30363d;color:#58a6ff;padding:10px 18px;border-radius:8px;font-size:13.5px">' + esc(QUIPS.openPage) + '</a>' +
             '</div>' +
-            '<div style="margin-top:18px;font-size:12px;color:#8b949e">install for ' + esc(os) + ':</div>' +
+            '<div style="margin-top:18px;font-size:12px;color:#8b949e">' + esc(QUIPS.installFor) + ' ' + esc(os) + '</div>' +
             '<pre id="ingest-cli" style="margin-top:6px;background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#e6edf3;overflow-x:auto">' + esc(OS_LINES[os]) + '</pre>' +
-            '<div style="font-size:12px;color:#8b949e;margin-top:12px">Then verify: <span style="font-family:ui-monospace,Menlo,monospace;color:#58a6ff">ingest verify &lt;unzipped-dir&gt;</span> — exit 0 = the bytes are intact (fingerprint ' + esc(pkg.fp) + ').</div>' +
+            '<div style="font-size:12px;color:#8b949e;margin-top:12px">' + esc(QUIPS.verifyHint) + ' — <span style="font-family:ui-monospace,Menlo,monospace;color:#58a6ff">ingest verify &lt;unzipped-dir&gt;</span> · exit 0 = the same bytes (' + esc(pkg.fp) + ')</div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -129,14 +144,14 @@
           if (copyBtn) copyBtn.addEventListener("click", function () {
             var line = "Read INGEST.md at " + url + "/INGEST.md and execute its load order; it routes everything else.";
             if (navigator.clipboard) navigator.clipboard.writeText(line);
-            copyBtn.textContent = "✓ Copied";
+            copyBtn.textContent = QUIPS.copied;
           });
           document.addEventListener("keydown", function esc2(e) {
             if (e.key === "Escape") { wrap.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", esc2); }
           });
         });
       }).catch(function () {
-        el.innerHTML = '<div style="border:1px solid #30363d;border-radius:10px;padding:14px;background:#0d1117;color:#8b949e;font-size:13px;font-family:monospace">ingest embed: could not reach ' + esc(url) + '</div>';
+        el.innerHTML = '<div style="border:1px solid #30363d;border-radius:10px;padding:14px;background:#0d1117;color:#8b949e;font-size:13px;font-family:monospace">' + esc(QUIPS.error) + ' — ' + esc(url) + '</div>';
       });
     });
   }
@@ -149,6 +164,6 @@
   // Node test hook — parseManifest/detectOS are pure functions; test them
   // without a DOM (tests/embed-parse.test.js). Browser flow is untouched.
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { parseManifest: parseManifest, detectOS: detectOS, esc: esc, OS_LINES: OS_LINES };
+    module.exports = { parseManifest: parseManifest, detectOS: detectOS, esc: esc, OS_LINES: OS_LINES, QUIPS: QUIPS };
   }
 })();

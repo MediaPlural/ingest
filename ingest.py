@@ -43,9 +43,9 @@ def fingerprint_files(root: pathlib.Path):
     return h.hexdigest()[:16]
 
 
-def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_line="", quip=""):
+def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_line="", tagline=""):
     fm = "\n".join(f"- `{f.relative_to(root).as_posix()}` — {f.stat().st_size:,} bytes" for f in files)
-    quip_block = "\n## Quip\n\n> " + quip + "\n" if quip else ""
+    tagline_block = "\n## Tagline\n\n> " + tagline + "\n" if tagline else ""
     return f"""# INGEST.md — machine manifest for `{root.name}`
 
 > Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
@@ -60,7 +60,7 @@ def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_
 ## BLUF
 
 {bluf}
-{quip_block}
+{tagline_block}
 ## File map
 
 {fm}
@@ -92,7 +92,7 @@ def cmd_init(args):
             grant_line += "> No --grant given: the grant defaults to the fingerprint — ISSUE a real grant before sharing privately.\n"
     else:
         grant_line = f"\n**Visibility:** {args.visibility} — ingestion is {'open to anyone with the reference' if args.visibility == 'public' else 'open to anyone holding the reference (not listed/indexed)'}.\n"
-    (root / CANONICAL).write_text(manifest_text(root, bluf, files, fp, args.video, args.visibility, grant_line, getattr(args, "quip", "")), encoding="utf-8")
+    (root / CANONICAL).write_text(manifest_text(root, bluf, files, fp, args.video, args.visibility, grant_line, getattr(args, "tagline", "")), encoding="utf-8")
     print(f"OK init: {root / CANONICAL}")
     print(f"   {len(files)} files | fingerprint {fp} | visibility {args.visibility}"
           + (f" | grant issued (hash {grant_hash})" if args.visibility == "private" else ""))
@@ -164,7 +164,7 @@ def main():
     p_init = sub.add_parser("init", help="scan artifact dir -> emit INGEST.md")
     p_init.add_argument("dir"); p_init.add_argument("--bluf", default=""); p_init.add_argument("--video", default="")
     p_init.add_argument("--visibility", default="unlisted", help="public|unlisted|private"); p_init.add_argument("--grant", default="", help="access grant token for private ingestion")
-    p_init.add_argument("--quip", default="", help="the signature one-liner lingo — rides the manifest and every share surface")
+    p_init.add_argument("--tagline", default="", help="the signature one-line thesis — rides the manifest and every share surface")
     p_init.set_defaults(fn=cmd_init)
     p_verify = sub.add_parser("verify", help="recompute + compare the fingerprint")
     p_verify.add_argument("dir"); p_verify.set_defaults(fn=cmd_verify)
