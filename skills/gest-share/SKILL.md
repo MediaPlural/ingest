@@ -26,8 +26,9 @@ upstream: MediaPlural/ingest
 > void-star catchlights at ~1/3 eye width MIRRORED about the face centerline —
 > served at /assets/design/... on all hosts) is the FACE OF THE GEST: any UI,
 > list, card, or notification representing a gest within Viiy carries the
-> Watchman mark. Light-mode surfaces carry the violet-ink glyph (#602EB8, the
-> true-purple retune); dark-mode surfaces the cream-ink glyph.
+> Watchman mark. Light-mode surfaces carry the warm-plum ink glyph (#4B2E80, the
+> final shade — Justin's pick from the shade jury); dark-mode surfaces the
+> cream-ink glyph.
 > Lore: the Watchman keeps Segais — every gest carries its gaze.
 
 
