@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
   // Host-aware site naming: our family serves under their own name (the
   // crown agnt.in lands from Sedo transfer; until then fm/my/viiy are the
   // live hosts and must not advertise a domain that doesn't answer yet).
-  const FAMILY = ["agnt.in", "ingest.fm", "ingest.my", "www.ingest.fm", "www.ingest.my"];
+  const FAMILY = ["agnt.in", "gest.to", "ingest.fm", "ingest.my", "www.gest.to", "www.ingest.fm", "www.ingest.my"];
   const personal = host.endsWith("viiy.to");
   const siteName = FAMILY.includes(host) || personal ? host : SITE.name;
 
@@ -325,6 +325,12 @@ function manifestFields(text) {
 function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   const f = manifestFields(m.text);
   const canonical = m.text.includes("AGENT-INGEST.md") ? "INGEST.md" : "INGEST.md";
+  // Two-tier owl law, derived from origin: viiy.to carries the Watchman
+  // (the inhouse mark); every other host carries the gestowl (the open mark).
+  const personalCard = String(origin || "").includes("viiy.to");
+  const brandIcon = personalCard ? "/assets/owl-brand-48.png" : "/assets/gestowl-brand-48.png";
+  const ogCard = personalCard ? "/assets/design/og-card-owl.png" : "/assets/design/og-card-gestowl.png";
+  const brandAlt = personalCard ? "The Watchman owl — the inhouse viiy gest mark" : "The gestowl — the open gest mark";
   // Absolute share URLs — relative links break at no-trailing-slash package URLs
   // (Reader-style proxies and LLMs follow links verbatim).
   const base = slug && origin ? `${origin}/${slug}` : "";
@@ -334,7 +340,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
 <meta property="og:description" content="${esc(f.bluf1)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${esc(base)}">
-<meta property="og:image" content="${esc(m.image || (origin + "/assets/design/og-card-owl.png"))}">
+<meta property="og:image" content="${esc(m.image || (origin + ogCard))}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Share card: ${esc(f.title)}, one-paragraph summary, and sha256 fingerprint on a dark background.">
@@ -363,7 +369,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
 </style>`;
   const body = `
 <div class="card">
-  <div class="brand"><img src="/assets/owl-brand-48.png" width="40" height="40" alt="The Watchman owl — the gest mark" style="image-rendering:-webkit-optimize-contrast"><span class="name">gest · INGEST.md</span></div>
+  <div class="brand"><img src="${brandIcon}" width="40" height="40" alt="${brandAlt}" style="image-rendering:-webkit-optimize-contrast"><span class="name">gest · INGEST.md</span></div>
   <h1>${esc(f.title)}</h1>
   <div class="sub">A gest — a shareable package any agent can ingest · INGEST.md convention · ${esc(siteName)}</div>
   ${f.tagline ? `<div class="tagline">&gt; ${esc(f.tagline)}</div>` : ""}
