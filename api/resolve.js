@@ -5,6 +5,7 @@
 
 const { classify, TRY } = require("./lib/classify.js");
 const PACKAGES = require("./lib/packages.generated.js");
+const { zipBuild } = require("./lib/zip.js");
 
 // In production, slugs map to package dirs under /packages at build time —
 // tools/embed-packages.js bakes them into api/lib/packages.generated.js, so
@@ -18,6 +19,16 @@ const SITE = {
 
 module.exports = async (req, res) => {
   const url = new URL(req.url, "http://x");
+  // root /embed.js — the widget (host-aware: ORIGIN = the serving host)
+  if (url.pathname === "/embed.js") {
+    const js = readPackageFile("__host", "embed.js");
+    if (!js) return notFound(res, "embed.js");
+    res.writeHead(200, {
+      "Content-Type": "text/javascript; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+    });
+    return res.end(js.text);
+  }
   const { view, slug, file } = classify(url.pathname, req.headers);
   const host = ((req.headers.host || req.headers.Host || "") || "").toLowerCase();
   // Host-aware site naming: our family serves under their own name (the
@@ -79,7 +90,36 @@ module.exports = async (req, res) => {
   }
 
   if (view === "file") {
-    const data = await readPackageFile(slug, file);
+    // one-click install: the whole artifact set as a deterministic zip
+    if (file === "archive.zip") {
+      const entries = PACKAGES[slug];
+      if (!entries) return notFound(res, slug);
+      const zip = zipBuild(
+        Object.entries(entries).map(([name, raw]) => ({
+          name: `${slug}/${name}`,
+          data: typeof raw === "string" && raw.startsWith("__b64__")
+            ? Buffer.from(raw.slice(7), "base64")
+            : Buffer.from(raw, "utf8"),
+        }))
+      );
+      res.writeHead(200, {
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="${slug}.zip"`,
+        "Access-Control-Allow-Origin": "*",
+      });
+      return res.end(zip);
+    }
+    // the embed widget, served host-aware (the ORIGIN is the serving host)
+    if (file === "embed.js") {
+      const js = readPackageFile("__host", "embed.js");
+      if (!js) return notFound(res, slug, file);
+      res.writeHead(200, {
+        "Content-Type": "text/javascript; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+      });
+      return res.end(js.text);
+    }
+    const data = readPackageFile(slug, file);
     if (!data) return notFound(res, slug, file);
     const types = {
       ".md": "text/markdown", ".txt": "text/plain", ".json": "application/json",

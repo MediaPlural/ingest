@@ -18,6 +18,7 @@ import argparse
 import hashlib
 import json
 import pathlib
+import shutil
 import sys
 
 CANONICAL = "INGEST.md"
@@ -42,8 +43,9 @@ def fingerprint_files(root: pathlib.Path):
     return h.hexdigest()[:16]
 
 
-def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_line=""):
+def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_line="", quip=""):
     fm = "\n".join(f"- `{f.relative_to(root).as_posix()}` — {f.stat().st_size:,} bytes" for f in files)
+    quip_block = "\n## Quip\n\n> " + quip + "\n" if quip else ""
     return f"""# INGEST.md — machine manifest for `{root.name}`
 
 > Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
@@ -58,7 +60,7 @@ def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_
 ## BLUF
 
 {bluf}
-
+{quip_block}
 ## File map
 
 {fm}
@@ -90,7 +92,7 @@ def cmd_init(args):
             grant_line += "> No --grant given: the grant defaults to the fingerprint — ISSUE a real grant before sharing privately.\n"
     else:
         grant_line = f"\n**Visibility:** {args.visibility} — ingestion is {'open to anyone with the reference' if args.visibility == 'public' else 'open to anyone holding the reference (not listed/indexed)'}.\n"
-    (root / CANONICAL).write_text(manifest_text(root, bluf, files, fp, args.video, args.visibility, grant_line), encoding="utf-8")
+    (root / CANONICAL).write_text(manifest_text(root, bluf, files, fp, args.video, args.visibility, grant_line, getattr(args, "quip", "")), encoding="utf-8")
     print(f"OK init: {root / CANONICAL}")
     print(f"   {len(files)} files | fingerprint {fp} | visibility {args.visibility}"
           + (f" | grant issued (hash {grant_hash})" if args.visibility == "private" else ""))
@@ -112,6 +114,26 @@ def cmd_verify(args):
     print(f"{'OK' if ok else 'MISMATCH'}: manifest {got.group(1)} vs recomputed {fp}")
     print(f"   manifest file: {m.name} ({'canonical' if m.name == CANONICAL else 'alias'})")
     return 0 if ok else 2
+
+
+def cmd_pack(args):
+    root = pathlib.Path(args.dir)
+    m = find_manifest(root)
+    if m is None:
+        print(f"ERROR: no manifest in {root} — run `ingest init` first"); return 1
+    # verify BEFORE packing: never ship a mismatched tree
+    import re
+    text = m.read_text(encoding="utf-8")
+    got = re.search(r"fingerprint \(sha256\)\:\*?\*? `([0-9a-f]{16})`", text)
+    fp = fingerprint_files(root)
+    if not got or got.group(1) != fp:
+        print(f"ERROR: fingerprint mismatch (manifest {got.group(1) if got else '?'} vs recomputed {fp}) — run `ingest init` again"); return 2
+    # zip BESIDE the dir (never inside it — no self-inclusion), manifest included
+    dest = shutil.make_archive(str(root.resolve()), "zip", root_dir=root.parent, base_dir=root.name)
+    # exclude a stale sibling zip from a previous pack? not needed: make_archive names it <dir>.zip
+    print(f"OK pack: {dest}")
+    print(f"   fingerprint {fp} — recipient runs `ingest verify <dir>` after unzip; exit 0 = intact")
+    return 0
 
 
 def cmd_card(args):
@@ -142,11 +164,14 @@ def main():
     p_init = sub.add_parser("init", help="scan artifact dir -> emit INGEST.md")
     p_init.add_argument("dir"); p_init.add_argument("--bluf", default=""); p_init.add_argument("--video", default="")
     p_init.add_argument("--visibility", default="unlisted", help="public|unlisted|private"); p_init.add_argument("--grant", default="", help="access grant token for private ingestion")
+    p_init.add_argument("--quip", default="", help="the signature one-liner lingo — rides the manifest and every share surface")
     p_init.set_defaults(fn=cmd_init)
     p_verify = sub.add_parser("verify", help="recompute + compare the fingerprint")
     p_verify.add_argument("dir"); p_verify.set_defaults(fn=cmd_verify)
     p_card = sub.add_parser("card", help="emit the share card + one-liner")
     p_card.add_argument("dir"); p_card.set_defaults(fn=cmd_card)
+    p_pack = sub.add_parser("pack", help="zip the artifact set (manifest excluded from the hash, included in the zip) -> <dir>.zip beside it")
+    p_pack.add_argument("dir"); p_pack.set_defaults(fn=cmd_pack)
     args = ap.parse_args()
     return args.fn(args)
 
