@@ -214,7 +214,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
 <meta property="og:description" content="${esc(f.bluf1)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${esc(base)}">
-<meta property="og:image" content="${esc(m.image || (origin + "/assets/design/og-card-glass.png"))}">
+<meta property="og:image" content="${esc(m.image || (origin + "/assets/design/og-card-owl.png"))}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Share card: ${esc(f.title)}, one-paragraph summary, and sha256 fingerprint on a dark background.">
@@ -242,7 +242,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
 </style>`;
   const body = `
 <div class="card">
-  <div class="brand">${logoSVG}<span class="name">gest · INGEST.md</span></div>
+  <div class="brand"><img src="/assets/owl-brand-48.png" width="40" height="40" alt="The Watchman owl — the gest mark" style="image-rendering:-webkit-optimize-contrast"><span class="name">gest · INGEST.md</span></div>
   <h1>${esc(f.title)}</h1>
   <div class="sub">A gest — a shareable package any agent can ingest · INGEST.md convention · ${esc(siteName)}</div>
   <div class="bluf">${esc(f.bluf)}</div>
