@@ -49,6 +49,13 @@ module.exports = async (req, res) => {
     res.end(body);
   };
 
+  // ── the demo page — the embed, live, on our own host (guarded: a single
+  //    path segment that classify would otherwise treat as a package slug) ──
+  if (url.pathname === "/demo") {
+    const origin = `https://${siteName}`;
+    return html(demoHTML(origin, siteName));
+  }
+
   // ── static assets (the gest mark + OG cards) ─────────────────────
   if (url.pathname.startsWith("/assets/")) {
     // support one subdirectory level (assets/design/...): sanitize each
@@ -140,12 +147,6 @@ module.exports = async (req, res) => {
     const blob = readPackageFile(slug, file);
     res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream", "Access-Control-Allow-Origin": "*" });
     return res.end(blob.text);
-  }
-
-  // ── the demo page — the embed, live, on our own host ───────────
-  if (url.pathname === "/demo") {
-    const origin = `https://${siteName}`;
-    return html(demoHTML(origin, siteName));
   }
 
   // ── playground ────────────────────────────────────────────────
