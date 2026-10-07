@@ -21,10 +21,13 @@ upstream: MediaPlural/ingest
 
 # Gest Share — the agent skill for the INGEST.md/gest feature set
 
-> **The Watchman owl** (assets/design/owl-ingest/owl-ingest-friendly-1.png in this
-> repo, served at /assets/design/... on all hosts) is the FACE OF THE GEST: any
-> UI, list, card, or notification representing a gest within Viiy carries the
-> Watchman mark. Lore: the Watchman keeps Segais — every gest carries its gaze.
+> **The Watchman owl** (assets/design/owl-ingest/owl-ingest-canon.png in this
+> repo — shield-crest Watchman with four-pointed void-star catchlights at ~1/3
+> eye width, upper-right position, both eyes — served at /assets/design/... on
+> all hosts) is the FACE OF THE GEST: any UI, list, card, or notification
+> representing a gest within Viiy carries the Watchman mark. Light-mode
+> surfaces carry the navy-ink glyph; dark-mode surfaces the cream-ink glyph.
+> Lore: the Watchman keeps Segais — every gest carries its gaze.
 
 
 One engine, every runtime (Hermes, Claude Code, OpenClaw, Cursor, .viiy, MCP clients). This SKILL.md speaks the AgentSkills dialect; `install-everywhere.sh` carries it to each runtime.
