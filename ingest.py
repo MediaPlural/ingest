@@ -18,11 +18,26 @@ import argparse
 import hashlib
 import json
 import pathlib
+import re
+import secrets
 import shutil
 import sys
 
 CANONICAL = "INGEST.md"
 ALIAS = "AGENT-INGEST.md"
+ID_RE = re.compile(r"^[0-9a-z]{6,14}$")
+
+
+def gen_gest_id():
+    """base36, ~52 bits of crypto-random — the x.com/i/status law: the ID is
+    load-bearing, the owner in the URL is decoration."""
+    n = secrets.randbits(52)
+    digits = "0123456789abcdefghijklmnopqrstuvwxyz"
+    out = ""
+    while n:
+        n, r = divmod(n, 36)
+        out = digits[r] + out
+    return out or "0"
 
 
 def find_manifest(root: pathlib.Path):
@@ -43,14 +58,16 @@ def fingerprint_files(root: pathlib.Path):
     return h.hexdigest()[:16]
 
 
-def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_line="", tagline=""):
+def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_line="", tagline="", gest_id="", owner=""):
     fm = "\n".join(f"- `{f.relative_to(root).as_posix()}` — {f.stat().st_size:,} bytes" for f in files)
     tagline_block = "\n## Tagline\n\n> " + tagline + "\n" if tagline else ""
+    id_block = f"\n> **Gest ID:** `{gest_id}` — the load-bearing reference (owner in the URL is decoration).\n" if gest_id else ""
+    owner_block = f"> **Owner:** {owner}\n" if owner else ""
     return f"""# INGEST.md — machine manifest for `{root.name}`
 
 > Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
 > **Package fingerprint (sha256):** `{fp}` — verify after transfer; if it differs, the tree changed.
-{grant_line}
+{id_block}{owner_block}{grant_line}
 ## Load order (the one required section)
 
 1. BLUF (below) — the one-paragraph bottom line.
@@ -84,6 +101,16 @@ def cmd_init(args):
     bluf = pathlib.Path(args.bluf).read_text(encoding="utf-8").strip() if args.bluf else "(BLUF not yet written — write it before sharing.)"
     fp = fingerprint_files(root)
     import hashlib as _h
+    # Gest ID: auto-generate unless --gest-id given; reuse if the manifest already has one (stable identity)
+    existing = ""
+    old = find_manifest(root)
+    if old is not None:
+        m = re.search(r"\*\*Gest ID:\*\* `([0-9a-z]{6,14})`", old.read_text(encoding="utf-8"))
+        if m: existing = m.group(1)
+    gest_id = getattr(args, "gest_id", "") or existing or gen_gest_id()
+    if not ID_RE.match(gest_id):
+        print(f"ERROR: --gest-id must be 6-14 chars of lowercase alphanumerics (got '{gest_id}')"); return 1
+    owner = getattr(args, "owner", "")
     grant_line = ""
     if args.visibility == "private":
         grant_hash = _h.sha256(args.grant.encode()).hexdigest()[:16] if args.grant else _h.sha256(fp.encode()).hexdigest()[:16]
@@ -92,10 +119,11 @@ def cmd_init(args):
             grant_line += "> No --grant given: the grant defaults to the fingerprint — ISSUE a real grant before sharing privately.\n"
     else:
         grant_line = f"\n**Visibility:** {args.visibility} — ingestion is {'open to anyone with the reference' if args.visibility == 'public' else 'open to anyone holding the reference (not listed/indexed)'}.\n"
-    (root / CANONICAL).write_text(manifest_text(root, bluf, files, fp, args.video, args.visibility, grant_line, getattr(args, "tagline", "")), encoding="utf-8")
+    (root / CANONICAL).write_text(manifest_text(root, bluf, files, fp, args.video, args.visibility, grant_line, getattr(args, "tagline", ""), gest_id, owner), encoding="utf-8")
     print(f"OK init: {root / CANONICAL}")
     print(f"   {len(files)} files | fingerprint {fp} | visibility {args.visibility}"
           + (f" | grant issued (hash {grant_hash})" if args.visibility == "private" else ""))
+    print(f"   gest id: {gest_id}" + (f" | owner: {owner}" if owner else ""))
     return 0
 
 
@@ -165,6 +193,8 @@ def main():
     p_init.add_argument("dir"); p_init.add_argument("--bluf", default=""); p_init.add_argument("--video", default="")
     p_init.add_argument("--visibility", default="unlisted", help="public|unlisted|private"); p_init.add_argument("--grant", default="", help="access grant token for private ingestion")
     p_init.add_argument("--tagline", default="", help="the signature one-line thesis — rides the manifest and every share surface")
+    p_init.add_argument("--gest-id", default="", help="override the auto-generated base36 gest id (6-14 lowercase alphanumerics)")
+    p_init.add_argument("--owner", default="", help="the owner handle — decoration in the URL, identity on the board (e.g. 'justin')")
     p_init.set_defaults(fn=cmd_init)
     p_verify = sub.add_parser("verify", help="recompute + compare the fingerprint")
     p_verify.add_argument("dir"); p_verify.set_defaults(fn=cmd_verify)

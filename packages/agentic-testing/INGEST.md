@@ -3,7 +3,10 @@
 > Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
 > **Package fingerprint (sha256):** `42b5d7f1a7501cf3` — verify after transfer; if it differs, the tree changed.
 
-**Visibility:** unlisted — ingestion is open to anyone holding the reference (not listed/indexed).
+> **Gest ID:** `99q139ok8t` — the load-bearing reference (owner in the URL is decoration).
+> **Owner:** justin
+
+**Visibility:** public — ingestion is open to anyone with the reference.
 
 ## Load order (the one required section)
 

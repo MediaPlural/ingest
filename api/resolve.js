@@ -56,6 +56,53 @@ module.exports = async (req, res) => {
     return html(demoHTML(origin, siteName));
   }
 
+  // ── the machine ledger — every public gest, JSON (agents + integrations) ──
+  if (url.pathname === "/gests.json") {
+    const ledger = Object.entries(PACKAGES)
+      .filter(([slug]) => !slug.startsWith("__") && slug !== "assets")
+      .map(([slug, files]) => {
+        const m = files["INGEST.md"] || files["AGENT-INGEST.md"] || "";
+        const text = typeof m === "string" && m.startsWith("__b64__") ? Buffer.from(m.slice(7), "base64").toString("utf8") : (m || "");
+        const f = manifestFields(text);
+        return {
+          slug,
+          gest_id: (text.match(/\*\*Gest ID:\*\* `([0-9a-z]{6,14})`/) || [])[1] || null,
+          owner: (text.match(/\*\*Owner:\*\* ([^\n]+)/) || [])[1] || null,
+          title: f.title,
+          bluf1: f.bluf1,
+          tagline: f.tagline || null,
+          fingerprint: f.fp,
+          visibility: (text.match(/\*\*Visibility:\*\* ([a-z]+)/) || [])[1] || "unlisted",
+        };
+      })
+      .filter((g) => g.gest_id && g.visibility === "public");
+    res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+    return res.end(JSON.stringify({ gests: ledger }, null, 1));
+  }
+
+  // ── the board — the human ledger (search/filterable, public gests only) ──
+  if (url.pathname === "/board") {
+    const origin = `https://${siteName}`;
+    return html(boardHTML(origin, siteName));
+  }
+
+  // ── owner-scoped routing: /<owner>/<gest-id> and /<gest-id> both resolve;
+  //    the ID is load-bearing, the owner is decoration (the x.com/i/status law) ──
+  {
+    const segs = url.pathname.split("/").filter(Boolean);
+    const gestIdRe = /^[0-9a-z]{6,14}$/;
+    if (segs.length === 1 && gestIdRe.test(segs[0]) && !PACKAGES[segs[0]]) {
+      const hit = findByGestId(segs[0]);
+      if (hit) return serveGest(req, res, hit.slug, siteName, host);
+      return notFound(res, segs[0]);
+    }
+    if (segs.length === 2 && gestIdRe.test(segs[1])) {
+      const hit = findByGestId(segs[1]);
+      if (hit && ownerOf(hit.slug) === segs[0].toLowerCase()) return serveGest(req, res, hit.slug, siteName, host);
+      return notFound(res, segs.join("/"));
+    }
+  }
+
   // ── static assets (the gest mark + OG cards) ─────────────────────
   if (url.pathname.startsWith("/assets/")) {
     // support one subdirectory level (assets/design/...): sanitize each
@@ -160,6 +207,60 @@ module.exports = async (req, res) => {
   return html(indexHTML(slugs, siteName));
 };
 
+
+// ── gest-id helpers (the ID is load-bearing; owner is decoration) ──
+function manifestOf(slug) {
+  const files = PACKAGES[slug];
+  if (!files) return { text: "" };
+  const m = files["INGEST.md"] || files["AGENT-INGEST.md"] || "";
+  return { text: typeof m === "string" && m.startsWith("__b64__") ? Buffer.from(m.slice(7), "base64").toString("utf8") : (m || "") };
+}
+
+function findByGestId(id) {
+  for (const slug of Object.keys(PACKAGES)) {
+    if (slug.startsWith("__") || slug === "assets") continue;
+    const t = manifestOf(slug).text;
+    const gid = (t.match(/\*\*Gest ID:\*\* `([0-9a-z]{6,14})`/) || [])[1];
+    if (gid === id) return { slug, text: t };
+  }
+  return null;
+}
+
+function ownerOf(slug) {
+  const t = manifestOf(slug).text;
+  return ((t.match(/\*\*Owner:\*\* ([^\n]+)/) || [])[1] || "").trim().toLowerCase();
+}
+
+// owner/id serving: same three surfaces, same code path as slug serving
+function serveGest(req, res, slug, siteName, host) {
+  const { classify } = require("./lib/classify.js");
+  const url = new URL(req.url, "http://x");
+  const { view } = classify(url.pathname, req.headers);
+  // strip owner/id segments → route as the package's own paths
+  const origin = `https://${host}`;
+  const m = manifestOf(slug);
+  if (!m.text) return notFound(res, slug);
+  const f = manifestFields(m.text);
+  if (view === "manifest" || isAgent(req.headers)) {
+    res.writeHead(200, { "Content-Type": "text/markdown; charset=utf-8", "X-Robots-Tag": "noindex", "Access-Control-Allow-Origin": "*" });
+    return res.end(m.text);
+  }
+  if (isCardCrawler((req.headers["user-agent"] || "").toString())) {
+    return htmlWrap(res, cardHTML({ text: m.text }, { ogOnly: true, siteName, slug, origin: `https://${siteName}` }));
+  }
+  return htmlWrap(res, cardHTML({ text: m.text }, { ogOnly: false, siteName, slug, origin: `https://${siteName}` }));
+}
+function isAgent(headers) {
+  const ua = (headers["user-agent"] || "").toString();
+  return !ua || /curl|wget|python|node|httpx|OpenAI|Anthropic/i.test(ua);
+}
+function isCardCrawler(ua) {
+  return /Twitterbot|facebookexternalhit|Discord|Slack|TelegramBot|LinkedInBot|Googlebot/i.test(ua);
+}
+function htmlWrap(res, body, status = 200) {
+  res.writeHead(status, { "Content-Type": "text/html; charset=utf-8" });
+  res.end(body);
+}
 
 // ── the post surface (v1.2): paste blocks on the card page ──────────
 // Clicking the post loads the code; pasting the URL works all the same.
@@ -330,6 +431,64 @@ python3 tools/arm.py ./my-package --slug my-package --url ${origin}/my-package</
 <p class="note">The arming tool copies the artifact set into the host's packages/ dir and stamps the share URL. The manifest stays the single source of truth.</p>
 
 <p><a href="/">← host home</a></p>
+</body></html>`;
+}
+
+function boardHTML(origin, siteName) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>the board — public gests</title>
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="The board — public gests">
+<meta property="og:description" content="Every public gest on ${siteName}, search/filterable. The machine ledger: /gests.json.">
+<style>
+  body { margin:0; font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:#0d1117; color:#e6edf3; padding:6vh 6vw; line-height:1.65; }
+  h1 { font-size:26px; } h2 { font-size:15px; color:#58a6ff; margin-top:40px; }
+  a { color:#58a6ff; text-decoration:none; }
+  .quip { color:#79c0ff; font-style:italic; font-size:13.5px; }
+  .note { color:#8b949e; font-size:13px; }
+  #q { width:100%; max-width:560px; background:#161b22; border:1px solid #30363d; border-radius:10px; color:#e6edf3; padding:12px 16px; font-size:15px; margin:8px 0 28px; }
+  .gest { border:1px solid #30363d; border-radius:12px; background:#161b22; padding:16px 18px; margin:14px 0; cursor:pointer; }
+  .gest:hover { border-color:#58a6ff; }
+  .gest .t { font-size:16px; font-weight:600; }
+  .gest .meta { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:#8b949e; margin-top:6px; }
+  .gest .bluf { font-size:13.5px; color:#c9d1d9; margin-top:8px; }
+  .gest .tagline { color:#79c0ff; font-style:italic; font-size:13px; margin-top:6px; }
+  .none { color:#8b949e; font-style:italic; }
+</style>
+</head><body>
+<h1>the board</h1>
+<p class="quip">&gt; every public gest, on one board — the wells hold no secrets</p>
+<p class="note">Search/filter the public ledger. The machine surface: <a href="/gests.json">/gests.json</a>. Unlisted gests resolve but never list; private gests need a grant.</p>
+<input id="q" type="search" placeholder="filter gests — owner, title, bluf, id, tagline…" oninput="filterGests(this.value)">
+<div id="list"></div>
+<p class="none" id="none" style="display:none">no gests match — even the best filters miss sometimes</p>
+<script>
+var GESTS = [];
+fetch("/gests.json").then(function (r) { return r.json(); }).then(function (d) {
+  GESTS = d.gests || [];
+  render("");
+});
+function render(q) {
+  var list = document.getElementById("list");
+  var none = document.getElementById("none");
+  var needle = (q || "").toLowerCase();
+  var hits = GESTS.filter(function (g) {
+    return !needle || JSON.stringify(g).toLowerCase().includes(needle);
+  });
+  list.innerHTML = hits.map(function (g) {
+    var url = "/" + (g.owner || "x") + "/" + g.gest_id;
+    return '<div class="gest" onclick="location.assign(\\'' + url + '\\')">' +
+      '<div class="t">' + esc2(g.title) + '</div>' +
+      (g.tagline ? '<div class="tagline">&gt; ' + esc2(g.tagline) + '</div>' : '') +
+      '<div class="bluf">' + esc2(g.bluf1) + '</div>' +
+      '<div class="meta">' + esc2(g.owner || "—") + ' · ' + esc2(g.gest_id) + ' · sha256 ' + esc2(g.fingerprint) + '</div>' +
+    '</div>';
+  }).join("");
+  none.style.display = hits.length ? "none" : "block";
+}
+function filterGests(q) { render(q); }
+function esc2(s) { return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+</script>
 </body></html>`;
 }
 
