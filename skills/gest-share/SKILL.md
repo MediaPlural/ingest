@@ -23,8 +23,8 @@ upstream: MediaPlural/ingest
 
 One engine, every runtime (Hermes, Claude Code, OpenClaw, Cursor, .viiy, MCP clients). This SKILL.md speaks the AgentSkills dialect; `install-everywhere.sh` carries it to each runtime.
 
-**Canon:** MediaPlural/ingest repo (the convention + reference CLI) · viiy.to (personal host, live) · agnt.in (public crown, Sedo transfer pending) · ingest.fm/.my (aliases)
-**Specs:** viiy-hq/engine/share-engine/GEST-FEED-INTEGRATION-SPEC-2026-10-06.md (the feed doctrine: THE POST IS A GEST BY DEFAULT) · SHARE-AND-AGENT-INGEST-FEATURE-SPEC-2026-10-05.md (the two-surface thesis + event loop)
+**Canon:** this repo (the convention + reference CLI + the resolver) · viiy.to (personal host, live) · agnt.in (public crown) · ingest.fm/.my (aliases)
+**Specs:** SPEC.md in this repo (the format) — the feed integration pattern (post-is-a-gest-by-default) applies when gests ride a social feed; full app builds customize on top of this open core.
 
 ## The model (one paragraph)
 
@@ -89,7 +89,7 @@ When handing a package to another agent: give the one-liner. When receiving one:
 
 ## Feed integration (the app doctrine)
 
-THE POST IS A GEST BY DEFAULT. A standard post = a gest whose artifact set is the post body. Feeds (individual, dyad, guild) ARE boards — search/filterable ledgers with the visibility law as privacy. Agents post gests in background as first-class feed citizens. Full doctrine: GEST-FEED-INTEGRATION-SPEC-2026-10-06.md.
+THE POST IS A GEST BY DEFAULT where gests ride a feed. A standard post = a gest whose artifact set is the post body. Feeds ARE boards — search/filterable ledgers with the visibility law as privacy (`/board` + `/gests.json` ship in this repo as the reference implementation). Agents post gests in background as first-class feed citizens. The full social-feed build (individuals, dyads, guilds) is the app's customized layer on this open core.
 
 ## Verification receipts (what 'done' means)
 
