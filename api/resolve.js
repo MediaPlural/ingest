@@ -373,7 +373,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
   <div class="oneliner">For your agent: <b>Read ${canonical} at the artifact root and execute its load order; it routes everything else.</b></div>
   ${pasteBlocks(slug, origin, "")}
   <div class="files">${f.files.map((x) => `${esc(x.path)} — ${esc(x.size)} bytes`).join("<br>")}</div>
-  <p><a href="${manifestHref}">INGEST.md manifest →</a>${base ? ` · <a href="${base}/INGEST.md">absolute</a>` : ""} · <a href="${origin || "/"}">← host home</a></p>
+  <p><a href="${manifestHref}">INGEST.md manifest →</a> · <a href="${base ? `${base}/archive.zip` : "./archive.zip"}">⬇ Download .zip</a>${base ? ` · <a href="${base}/INGEST.md">absolute</a>` : ""} · <a href="${origin || "/"}">← host home</a></p>
 </div>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230d1117%27/%3E%3Cpath d=%27M17 39 a15 15 0 0 0 30 0%27 fill=%27none%27 stroke=%27%2358a6ff%27 stroke-width=%273.5%27 stroke-linecap=%27round%27/%3E%3Ccircle cx=%2732%27 cy=%2726%27 r=%275.5%27 fill=%27%23ff8c66%27/%3E%3C/svg%3E">
