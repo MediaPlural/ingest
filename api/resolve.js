@@ -214,7 +214,7 @@ function cardHTML(m, { ogOnly = false, siteName, slug, origin } = {}) {
 <meta property="og:description" content="${esc(f.bluf1)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${esc(base)}">
-<meta property="og:image" content="${esc(m.image || (origin + "/assets/og-card.png"))}">
+<meta property="og:image" content="${esc(m.image || (origin + "/assets/design/og-card-glass.png"))}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Share card: ${esc(f.title)}, one-paragraph summary, and sha256 fingerprint on a dark background.">
