@@ -49,10 +49,19 @@ module.exports = async (req, res) => {
     res.end(body);
   };
 
-  // ── static assets (the gest mark + OG card) ─────────────────────
+  // ── static assets (the gest mark + OG cards) ─────────────────────
   if (url.pathname.startsWith("/assets/")) {
-    const file = url.pathname.slice("/assets/".length).replace(/[^a-zA-Z0-9._-]/g, "");
-    const raw = PACKAGES.assets && PACKAGES.assets[file];
+    // support one subdirectory level (assets/design/...): sanitize each
+    // segment, never let a segment escape the assets root
+    const segs = url.pathname.slice("/assets/".length).split("/")
+      .filter(Boolean)
+      .map((s) => s.replace(/[^a-zA-Z0-9._-]/g, ""))
+      .filter(Boolean);
+    if (segs.length === 0 || segs.length > 2) return notFound(res, "assets", url.pathname);
+    const file = segs[segs.length - 1];
+    const dir = segs.length === 2 ? segs[0] + "/" : "";
+    const key = dir + file;
+    const raw = PACKAGES.assets && PACKAGES.assets[key];
     if (raw) {
       const isB64 = typeof raw === "string" && raw.startsWith("__b64__");
       const body = isB64 ? Buffer.from(raw.slice(7), "base64") : Buffer.from(String(raw), "utf8");
