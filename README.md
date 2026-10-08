@@ -25,6 +25,7 @@ Read INGEST.md at the artifact root and execute its load order; it routes everyt
 
 - **The file is the SDK.** `ingest init` generates the manifest from any directory; `ingest verify` recomputes the fingerprint; `ingest card` emits the share card + one-liner. Stdlib-only Python — zero dependencies, no account, no service.
 - **Composable-minimal spec.** One required section (the **load order**), a small required field set (fingerprint, file map). Everything else — BLUF, visibility, provenance — degrades gracefully.
+- **Capabilities are toggles.** The manifest law is the only invariant; every capability beyond the core (boards/feeds, visibility tiers, grants, commerce delivery, cost-sharing) is a deployment switch — on or off for your use case. The reference hosts are just different configs of the same modular stack.
 - **Two names, one format.** `INGEST.md` is canonical; `AGENT-INGEST.md` is a registered alias validating against the same schema. Discovery order: `INGEST.md` first, `AGENT-INGEST.md` second. (Namespace defense — see SPEC.md.)
 - **Schemas travel with the format.** The manifest schema ships in this repo; the event vocabulary (`share_sent` / `share_opened` / `agent_ingested`) is defined semantically in SPEC.md so the concepts spread with the format.
 
