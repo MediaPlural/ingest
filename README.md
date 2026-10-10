@@ -47,6 +47,26 @@ python3 ingest.py card ./my-package
 
 See `examples/simple-package/` for a generated manifest.
 
+## Bringing content in (the source lane)
+
+`ingest.py` presumes you already have the artifact set. Most adopters don't — the content lives in a CMS, an API, or a feed. `tools/ingest-source.py` materializes it, then hands off to the core:
+
+```bash
+# fetch any of: dir | file | json (content API) | rss (RSS 2.0 or Atom)
+python3 tools/ingest-source.py fetch --source rss --from https://example.com/feed --out ./pkg
+
+# then arm it exactly as always — the source lane writes no manifest of its own
+python3 ingest.py init ./pkg --bluf bluf.txt --visibility public
+python3 ingest.py verify ./pkg
+```
+
+- **It is a sibling tool, not a verb in `ingest.py`.** The format core stays the invariant; sources are a deployment capability. Nothing about the manifest changes because of where the bytes came from.
+- **Provenance at the door.** Every item lands as Markdown (front-matter carries title / source_url / published / fetched_at) and `SOURCES.json` records origin + sha256 + bytes per item, so the tree you armed can be traced back to where it came from.
+- **Field names are matched loosely** across the common vendor shapes (`title|name|headline`, `url|link|permalink`, `text|content|body|summary|…`), so no per-vendor adapter is ever needed.
+- **Deterministic.** `--now <ISO>` pins the clock: the same source yields byte-identical content, into any directory. Only the receipt's own log fields (`out`, `fetched_at`) vary.
+- **Refusal is an outcome, not a crash.** A missing locator, a malformed payload, an empty result, or XML carrying a DTD/entity declaration exits `2`, prints the reason, and writes nothing. Payloads are size-capped and DTD-bearing XML is refused outright, so the stdlib parser is safe here without a dependency.
+- **Zero dependencies, still.** Python 3.9 through 3.13 — the annotations are lazy.
+
 ## The event vocabulary (named, not prescribed)
 
 SPEC.md defines three events *semantically* — `share_sent`, `share_opened`, `agent_ingested` — so measurement vocabulary spreads with the convention. How you detect and record them is your implementation; this convention defines the manifest, not the analytics.
@@ -54,7 +74,7 @@ SPEC.md defines three events *semantically* — `share_sent`, `share_opened`, `a
 ## License
 
 - **SPEC.md + the format itself:** CC-BY 4.0 (`LICENSE-SPEC`)
-- **Reference code (`ingest.py`):** Apache 2.0 (`LICENSE`)
+- **Reference code (`ingest.py`, `tools/`):** Apache 2.0 (`LICENSE`)
 
 ## Prior art & kin (honest)
 
