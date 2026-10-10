@@ -1,0 +1,57 @@
+name: CI
+
+# This repo previously had no CI, and two defects went unnoticed because of it:
+#
+#   1. api/lib/packages.generated.js — 70 MB of build output — was committed.
+#      It is produced by `node tools/embed-packages.js`, which vercel.json
+#      already declared as the buildCommand. Committing it made the repo 124 MB
+#      and every clone carry a file the build regenerates. It has been evicted
+#      from history and the build now runs here before the tests that need it.
+#   2. The documented test command (`node --test tests/`) does not resolve the
+#      directory on current Node. The explicit glob below is portable.
+#
+# Injection note (reviewed, no action needed): no `${{ }}` expression here reads
+# an event payload. The only interpolation is `matrix.node-version`, whose values
+# are the literal list defined in this same file.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: build + test (node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build (the repo's own declared build command)
+        run: node tools/embed-packages.js
+
+      - name: Test suite (node:test, no server, no network)
+        run: node --test tests/*.test.js
+
+      - name: Reference CLI is loadable
+        run: python3 ingest.py --help
+
+      - name: Generated output must not be committed
+        run: |
+          if git ls-files --error-unmatch api/lib/packages.generated.js >/dev/null 2>&1; then
+            echo "FAIL: api/lib/packages.generated.js is tracked — it is build output"
+            exit 1
+          fi
+          echo "ok: generated output is not tracked"
