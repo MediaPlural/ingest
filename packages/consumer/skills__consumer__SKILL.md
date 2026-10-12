@@ -37,7 +37,7 @@ writes_to:
   - transcripts/
   - distilled/
   - site/
-upstream: MediaPlural/consumer
+upstream: MediaPlural/bradan
 ---
 
 # Consumer — the knowledge consumer / engine of enlightenment
@@ -46,7 +46,7 @@ One engine, every runtime. This SKILL.md speaks the AgentSkills dialect
 (Hermes, Claude Code, OpenClaw, Cursor) and is carried by runtime adapters
 below for non-AgentSkills runtimes (VS Code/Copilot via MCP, any MCP client).
 
-Repo: `https://github.com/MediaPlural/consumer` (MIT). Local checkout:
+Repo: `https://github.com/MediaPlural/bradan` (MIT). Local checkout:
 run `CONSUMER_HOME` discovery below; default `/Users/sharpe/consumer`
 (studio), `~/consumer` (umbra), `tools/consumer` in the refurbapp worktree.
 

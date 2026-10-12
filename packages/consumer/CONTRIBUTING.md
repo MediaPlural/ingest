@@ -47,7 +47,7 @@ stdlib-only, and local-first; everything else is welcome.
 ## Dev loop
 
 ```bash
-git clone https://github.com/MediaPlural/consumer.git
+git clone https://github.com/MediaPlural/bradan.git
 cd consumer
 bash install.sh
 python3 tests/test_smoke.py          # must pass before you start and before you PR

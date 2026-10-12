@@ -104,7 +104,7 @@ One package, four paste surfaces — terminal, any AI, any coding agent, any bro
 
 **Terminal (macOS / Linux):**
 ```bash
-git clone https://github.com/MediaPlural/consumer ~/consumer && \
+git clone https://github.com/MediaPlural/bradan ~/consumer && \
   bash ~/consumer/install.sh && \
   python3 ~/consumer/source.py https://example.com --full
 ```
@@ -116,7 +116,7 @@ Read https://viiy.to/consumer/INGEST.md and execute its load order; it routes ev
 
 **Claude Code / Cursor / OpenClaw / VS Code / Hermes — one script detects and installs for every runtime present:**
 ```bash
-git clone https://github.com/MediaPlural/consumer ~/consumer && bash ~/consumer/install-everywhere.sh
+git clone https://github.com/MediaPlural/bradan ~/consumer && bash ~/consumer/install-everywhere.sh
 ```
 
 **Any browser:** open https://viiy.to/consumer — the post page carries the same blocks, clickable and copyable.
