@@ -16,7 +16,7 @@ tools:
 writes_to:
   - <artifact-dir>/INGEST.md
   - <artifact-dir>.zip
-upstream: MediaPlural/ingest
+upstream: justinsharpe/ingest
 ---
 
 # Gest Share — the agent skill for the INGEST.md/gest feature set
@@ -44,7 +44,7 @@ A gest is a shareable artifact that travels with its own machine digest: the hum
 ## Arm a gest (the CLI — stdlib-only Python, zero deps)
 
 ```bash
-# clone once: git clone https://github.com/MediaPlural/ingest
+# clone once: git clone https://github.com/justinsharpe/ingest
 cd ingest
 python3 ingest.py init ./my-package \
   --bluf bluf.txt \

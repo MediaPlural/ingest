@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/MediaPlural/ingest/schema/ingest-manifest.schema.json",
+  "$id": "https://github.com/justinsharpe/ingest/schema/ingest-manifest.schema.json",
   "title": "INGEST.md manifest",
   "description": "The shareable-artifact manifest: BLUF, load order, file map, sha256 package fingerprint. One schema for both INGEST.md (canonical) and AGENT-INGEST.md (alias).",
   "type": "object",

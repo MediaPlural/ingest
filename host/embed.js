@@ -31,9 +31,9 @@
     return "unknown";
   }
   var OS_LINES = {
-    windows: 'powershell -c "irm https://github.com/MediaPlural/ingest/raw/main/ingest.py -OutFile ingest.py; python ingest.py verify <dir>"',
-    mac: 'curl -O https://github.com/MediaPlural/ingest/raw/main/ingest.py && python3 ingest.py verify <dir>',
-    linux: 'curl -O https://github.com/MediaPlural/ingest/raw/main/ingest.py && python3 ingest.py verify <dir>',
+    windows: 'powershell -c "irm https://github.com/justinsharpe/ingest/raw/main/ingest.py -OutFile ingest.py; python ingest.py verify <dir>"',
+    mac: 'curl -O https://github.com/justinsharpe/ingest/raw/main/ingest.py && python3 ingest.py verify <dir>',
+    linux: 'curl -O https://github.com/justinsharpe/ingest/raw/main/ingest.py && python3 ingest.py verify <dir>',
     mobile: "(on mobile: download the zip — install from a desktop)",
     unknown: "python3 ingest.py verify <dir>",
   };

@@ -168,7 +168,7 @@ def cmd_post(args):
 <h2>The one-liner (for any agent)</h2>
 <pre><code>Read {args.url}/INGEST.md and execute its load order; it routes everything else.</code></pre>
 {blocks.replace("## Paste-ready (all equivalent)", "<h2>Paste-ready (all equivalent)</h2>").replace("**Terminal:**", "<p><b>Terminal:</b></p>").replace("**Any AI agent:**", "<p><b>Any AI agent:</b></p>").replace("**Claude Code / Cursor / OpenClaw / VS Code / Hermes:**", "<p><b>Claude Code / Cursor / OpenClaw / VS Code / Hermes:</b></p>").replace("**Browser:**", "<p><b>Browser:</b></p>").replace("```bash", "<pre><code>").replace("```", "</code></pre>")}
-<p class="note">One package, every reader. Manifest: <a style="color:#58a6ff" href="{args.url}/INGEST.md">INGEST.md</a> · Convention: MediaPlural/ingest</p>
+<p class="note">One package, every reader. Manifest: <a style="color:#58a6ff" href="{args.url}/INGEST.md">INGEST.md</a> · Convention: justinsharpe/ingest</p>
 </div></body></html>"""
     out = root / "share-post.html"
     out.write_text(html, encoding="utf-8")

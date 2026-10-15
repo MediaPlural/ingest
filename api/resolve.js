@@ -14,7 +14,7 @@ const { zipBuild } = require("./lib/zip.js");
 const SITE = {
   name: "agnt.in",
   tagline: "INGEST.md — the shareable-artifact manifest convention",
-  repo: "https://github.com/MediaPlural/ingest",
+  repo: "https://github.com/justinsharpe/ingest",
 };
 
 module.exports = async (req, res) => {
@@ -266,7 +266,7 @@ function htmlWrap(res, body, status = 200) {
 // Clicking the post loads the code; pasting the URL works all the same.
 function pasteBlocks(slug, origin, repo) {
   const url = `${origin}/${slug}`;
-  const r = repo || `https://github.com/MediaPlural/${slug}`;
+  const r = repo || `https://github.com/justinsharpe/${slug}`;
   return `
 <h2>Paste-ready (all equivalent)</h2>
 <p><b>Terminal:</b></p>
@@ -405,7 +405,7 @@ function tryHTML(origin, siteName) {
 </style>
 </head><body>
 <h1>try — the playground</h1>
-<p>One URL, three readers. The classifier is deterministic and inspectable: <a href="https://github.com/MediaPlural/ingest/blob/main/api/lib/classify.js">api/lib/classify.js</a>.</p>
+<p>One URL, three readers. The classifier is deterministic and inspectable: <a href="https://github.com/justinsharpe/ingest/blob/main/api/lib/classify.js">api/lib/classify.js</a>.</p>
 
 <h2>1 — the same URL, three ways</h2>
 <table>
@@ -430,7 +430,7 @@ curl -A "Twitterbot/1.0" ${origin}/agentic-testing | head -20</code></pre>
 <p class="note">Your agent fetches the manifest, executes the load order, and the whole package routes from one line. That is the entire convention.</p>
 
 <h2>4 — arm your own</h2>
-<pre><code>git clone https://github.com/MediaPlural/ingest
+<pre><code>git clone https://github.com/justinsharpe/ingest
 cd ingest
 python3 ingest.py init ./my-package --bluf bluf.txt
 python3 tools/arm.py ./my-package --slug my-package --url ${origin}/my-package</code></pre>

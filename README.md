@@ -32,7 +32,7 @@ Read INGEST.md at the artifact root and execute its load order; it routes everyt
 ## Quick start
 
 ```bash
-git clone https://github.com/MediaPlural/ingest
+git clone https://github.com/justinsharpe/ingest
 cd ingest
 
 # arm any artifact directory for sharing

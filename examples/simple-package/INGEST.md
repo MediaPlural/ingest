@@ -1,7 +1,7 @@
 # INGEST.md — machine manifest for `simple-package`
 
-> Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
-> **Package fingerprint (sha256):** `ad938d110aca5646` — verify after transfer; if it differs, the tree changed.
+> Convention: justinsharpe/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
+> **Package fingerprint (sha256):** `e19926789c46d428` — verify after transfer; if it differs, the tree changed.
 
 **Visibility:** unlisted — ingestion is open to anyone holding the reference (not listed/indexed).
 

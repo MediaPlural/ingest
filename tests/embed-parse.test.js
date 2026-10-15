@@ -5,7 +5,7 @@ const { parseManifest, esc, OS_LINES } = require("../host/embed.js");
 
 const MANIFEST = `# INGEST.md — machine manifest for \`agentic-testing\`
 
-> Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
+> Convention: justinsharpe/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
 > **Package fingerprint (sha256):** \`42b5d7f1a7501cf3\` — verify after transfer; if it differs, the tree changed.
 
 **Visibility:** unlisted — ingestion is open to anyone holding the reference (not listed/indexed).

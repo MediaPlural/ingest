@@ -52,7 +52,7 @@ import xml.etree.ElementTree as ET
 
 VERSION = "0.1.0"
 SOURCES_RECEIPT = "SOURCES.json"
-UA = "ingest-source/0.1 (+https://github.com/MediaPlural/ingest)"
+UA = "ingest-source/0.1 (+https://github.com/justinsharpe/ingest)"
 TIMEOUT = 20
 MAX_BYTES = 8 * 1024 * 1024  # refuse oversized payloads before parsing (bomb defence)
 FIELD_SEPARATOR = "\0"

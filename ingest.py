@@ -2,7 +2,7 @@
 """ingest — the INGEST.md reference CLI (convention tool, stdlib-only).
 
 The file is the SDK: this tool does the work an adopter would otherwise rebuild.
-Zero dependencies, no account, no service. Spec: MediaPlural/ingest SPEC.md
+Zero dependencies, no account, no service. Spec: justinsharpe/ingest SPEC.md
 (INGEST.md canonical + AGENT-INGEST.md alias, one schema, discovery order).
 
 Commands:
@@ -65,7 +65,7 @@ def manifest_text(root, bluf, files, fp, video="", visibility="unlisted", grant_
     owner_block = f"> **Owner:** {owner}\n" if owner else ""
     return f"""# INGEST.md — machine manifest for `{root.name}`
 
-> Convention: MediaPlural/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
+> Convention: justinsharpe/ingest — INGEST.md (canonical) / AGENT-INGEST.md (alias), one schema.
 > **Package fingerprint (sha256):** `{fp}` — verify after transfer; if it differs, the tree changed.
 {id_block}{owner_block}{grant_line}
 ## Load order (the one required section)
